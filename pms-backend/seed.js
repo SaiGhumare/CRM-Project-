@@ -188,6 +188,7 @@ const seedDB = async () => {
         department: 'CO',
         className: 'TY Diploma',
         division: 'A',
+        academicYear: '2025-26',
       });
       students.push(student);
     }
@@ -462,6 +463,98 @@ const seedDB = async () => {
       }
     }
     console.log(`✓ ${itrCreated} ITR records created\n`);
+
+    // ── 11. Create AY 2024-25 Students & Groups (from 4378 - TYCO CPP.csv) ──
+    console.log('─── AY 2024-25 Batch ───');
+
+    // Additional mentors that only appear in 2024-25
+    const mentor_gpb = await User.create({ name: 'Prof. G.P. Bharne', email: 'gp.bharne@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' });
+    const mentor_ydj = await User.create({ name: 'Prof. Y.D. Jadhav', email: 'yd.jadhav@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' });
+    console.log('✓ 2 additional mentors created (Prof. G.P. Bharne, Prof. Y.D. Jadhav)');
+
+    // All mentors including new ones — mapped by guide name in CSV
+    const allMentorsMap = {};
+    mentors.forEach(m => { allMentorsMap[m.name] = m; });
+    allMentorsMap['Prof. G.P. Bharne'] = mentor_gpb;
+    allMentorsMap['Prof. Y.D. Jadhav'] = mentor_ydj;
+    // Map CSV guide names to our mentor names
+    const guideLookup = {
+      'Prof.V.B.Ohol': allMentorsMap['Mr. V.B. Ohol'],
+      'Prof.R.V.Deshpande': allMentorsMap['Mrs. R.V. Deshpande'],
+      'Prof.P.B.Datir': allMentorsMap['Mrs. P.B. Datir'],
+      'Prof.Y.N.Jadhav': allMentorsMap['Mr. Y.N. Jadhav'],
+      'Prof.R.S.Thete': allMentorsMap['Mrs. R.S. Thete'],
+      'Prof.R.K.Ghate': allMentorsMap['Mrs. R.K. Ghate'],
+      'Prof.G.P.Bharne': mentor_gpb,
+      'Prof.Y.D.Jadhav': mentor_ydj,
+    };
+
+    // 2024-25 groups from CSV (19 groups)
+    const groups2024 = [
+      { grNo: '1', students: ['Kumbhar Mrunmai Sandip', 'Aher Shubham Arun', 'Suraywanshi Dipika Shantaram', 'Gole Apurva Anand'], project: 'Aerosense', guide: 'Prof.V.B.Ohol' },
+      { grNo: '2', students: ['Chaudhari Vaishnavi Nitin', 'Shejwal Sai Devidas', 'Kadam Maina Haribhau', 'Nathe Vicky Anil'], project: 'Crime Management System', guide: 'Prof.R.V.Deshpande' },
+      { grNo: '3', students: ['Patil Mansi Pravin', 'Bharti Anjali Ashok', 'Mule Bhakti Vitthal', 'Bajaj Gayatri Anil'], project: 'Website for Self Diagnosis and Drug Recommendation', guide: 'Prof.R.V.Deshpande' },
+      { grNo: '4', students: ['Darade Ruchita Nitin', 'Borse Bhagyashri Sunil', 'Zalte Vedika Haribhau', 'Pagar Sakshi Shivdas'], project: 'Smart Tourist', guide: 'Prof.P.B.Datir' },
+      { grNo: '5', students: ['Gamne Chaitanya Sanjay', 'Jagtap Shradha Suresh', 'Mahale Paras Nitin', 'Jadhav Omkar Machindra'], project: 'Farmer Equipment Rental Web Application', guide: 'Prof.V.B.Ohol' },
+      { grNo: '6', students: ['Suryawanshi Vishwajeet Nitin', 'Rathore Vaibhav', 'Katore Prasad Dattu', 'Sanap Kunal Vilas'], project: 'Car Buying Guide', guide: 'Prof.Y.N.Jadhav' },
+      { grNo: '7', students: ['Vende Prajwal Nitin', 'Kakulte Om Jagannath', 'Badgujar Gaurav Vijay', 'Patil Manas Yuvraj'], project: 'Quick Offline Pay', guide: 'Prof.Y.N.Jadhav' },
+      { grNo: '8', students: ['Borse Aditya Sharad', 'Tajne Rugved Vijay', 'Patil Vaishnavi Hemraj'], project: 'Career Path Finder', guide: 'Prof.V.B.Ohol' },
+      { grNo: '9', students: ['Pagar Ashwini Avinash', 'Jadhav Shubham Abasaheb', 'Thakre Manjusha Ashok', 'Bhondawe Mayuresh Keshav'], project: 'Real Time Visitor Tracker of Goshala', guide: 'Prof.R.S.Thete' },
+      { grNo: '10', students: ['Dawange Sahil Suresh', 'Jamdar Sarvesh Jitendra', 'Ahire Prajwal Manik', 'Koli Snehal Prabhakar'], project: 'Mental Health Consulting Website', guide: 'Prof.R.V.Deshpande' },
+      { grNo: '11', students: ['Rathore Krishna', 'Gawali Gananjay Kashinath', 'Chaudhari Pushkar Govind', 'Shinde Siddharth Santosh'], project: 'Health Care Adviser Application', guide: 'Prof.Y.N.Jadhav' },
+      { grNo: '12', students: ['Gangurde Kasturi Devaji', 'Bhamre Shruti Prashant', 'Zade Tanishka Nandu'], project: 'Agri Shop For Farmer', guide: 'Prof.G.P.Bharne' },
+      { grNo: '13', students: ['Patil Kajal Laxman', 'Bhandure Vaishnavi Sampat', 'Halor Kalyani Sanjay', 'Gauri Pawar'], project: 'Smart Street Light System', guide: 'Prof.G.P.Bharne' },
+      { grNo: '14', students: ['Patil Bhagyashri Nitin', 'Siddhant Gangurde Kiran'], project: 'E-plastic Waste Management Application', guide: 'Prof.R.V.Deshpande' },
+      { grNo: '15', students: ['Borse Sakshi Narayan', 'Chandramore Sanchita Ragnath', 'Rajput Aditi Ramchandra', 'Gangurde Pranali Ashok'], project: 'Rent My Stuff', guide: 'Prof.R.K.Ghate' },
+      { grNo: '16', students: ['Khan Rehan Aslam', 'Chaudhari Aditya Aba', 'Mahale Vishwajit Ajabsingh', 'Ilag Sanket Ashok'], project: 'Puzzle Alarm', guide: 'Prof.P.B.Datir' },
+      { grNo: '17', students: ['Bochare Sanchit Sharad', 'Davane Siddhant Mangesh', 'Kale Swanand Dnyaeshwar', 'Vaydeshkar Aniket Vishal'], project: 'Labor Management System', guide: 'Prof.Y.D.Jadhav' },
+      { grNo: '18', students: ['Joshi Nisha Jagannath', 'Deore Tanvi Manoj', 'Bagul Reva Namdev', 'Sonawane Krishna Bharat'], project: 'Candidate Assessment Tool', guide: 'Prof.G.P.Bharne' },
+      { grNo: '19', students: ['Wani Anushka Vilas', 'Bhirud Yamini Mohan', 'Kundalke Shubham Kailas'], project: 'Cryptography', guide: 'Prof.V.B.Ohol' },
+    ];
+
+    let students2024Created = 0;
+    let groups2024Created = 0;
+
+    for (const gData of groups2024) {
+      const memberIds = [];
+      let rollCounter = students2024Created + 1;
+
+      for (const studentName of gData.students) {
+        const emailName = studentName.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '');
+        const student = await User.create({
+          name: studentName,
+          email: `${emailName}.2024@sandip.edu`,
+          password: 'student123',
+          role: 'student',
+          rollNumber: String(rollCounter),
+          department: 'CO',
+          className: 'TY Diploma',
+          division: 'A',
+          academicYear: '2024-25',
+        });
+        memberIds.push(student._id);
+        rollCounter++;
+        students2024Created++;
+      }
+
+      const mentor = guideLookup[gData.guide];
+      const group = await StudentGroup.create({
+        name: `G${gData.grNo}`,
+        projectTitle: gData.project,
+        projectGuide: mentor ? mentor.name : gData.guide,
+        mentorId: mentor ? mentor._id : undefined,
+        members: memberIds,
+        academicYear: '2024-25',
+        department: 'CO',
+        overallProgress: Math.floor(Math.random() * 50) + 50,
+      });
+
+      await User.updateMany({ _id: { $in: memberIds } }, { groupId: group._id });
+      groups2024Created++;
+      console.log(`✓ G${gData.grNo}: "${gData.project}" — ${memberIds.length} members`);
+    }
+    console.log(`\n✓ ${students2024Created} students (AY 2024-25) created`);
+    console.log(`✓ ${groups2024Created} groups (AY 2024-25) created\n`);
 
     // ── Summary ──
     console.log('═══════════════════════════════════════════');

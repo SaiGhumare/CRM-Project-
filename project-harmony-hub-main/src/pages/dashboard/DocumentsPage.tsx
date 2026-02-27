@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,47 +9,32 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { DEPARTMENTS, ACADEMIC_YEARS } from '@/types';
-import { Eye, Download, Upload, FolderOpen, CheckCircle, Clock, AlertTriangle, Users } from 'lucide-react';
+import { Eye, Download, Upload, FolderOpen, CheckCircle, Clock, AlertTriangle, Users, Loader2 } from 'lucide-react';
+import { apiGet } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
+// Backend types
 interface DocumentRecord {
-  id: string;
-  serialNumber: string;
-  enrollmentNumber: string;
-  groupNumber: string;
-  studentNames: string;
-  projectTopic: string;
-  projectGuide: string;
-  stage: string;
-  documentType: string;
-  status: 'not_submitted' | 'needs_correction' | 'pending' | 'verified';
-  fileName?: string;
+  _id: string;
+  type: string;
+  fileName: string;
+  fileUrl: string;
+  status: string;
+  stage: number;
+  createdAt: string;
+  uploadedBy?: {
+    _id: string;
+    name: string;
+    enrollmentNumber?: string;
+  };
+  groupId?: {
+    _id: string;
+    name: string;
+    projectTitle: string;
+    projectGuide: string;
+    members?: { _id: string; name: string }[];
+  };
 }
-
-const mockDocumentRecords: DocumentRecord[] = [
-  { id: '1', serialNumber: '1', enrollmentNumber: '23611780192', groupNumber: 'G1', studentNames: 'Purva Santosh Deshmane, Arpita Sanjay Galankar', projectTopic: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir', stage: 'Stage 1', documentType: 'Synopsis', status: 'verified', fileName: 'synopsis_g1.pdf' },
-  { id: '2', serialNumber: '2', enrollmentNumber: '23611780192', groupNumber: 'G1', studentNames: 'Purva Santosh Deshmane, Arpita Sanjay Galankar', projectTopic: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir', stage: 'Stage 1', documentType: 'PPT Stage One', status: 'pending', fileName: 'ppt_stage1_g1.pptx' },
-  { id: '3', serialNumber: '3', enrollmentNumber: '23611780192', groupNumber: 'G1', studentNames: 'Purva Santosh Deshmane, Arpita Sanjay Galankar', projectTopic: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir', stage: 'Stage 2', documentType: 'Final Report', status: 'not_submitted' },
-  { id: '4', serialNumber: '4', enrollmentNumber: '23611780234', groupNumber: 'G1', studentNames: 'Purva Santosh Deshmane, Arpita Sanjay Galankar', projectTopic: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir', stage: 'Stage 1', documentType: 'Black Book', status: 'pending', fileName: 'blackbook_arpita.pdf' },
-  { id: '5', serialNumber: '5', enrollmentNumber: '23611780356', groupNumber: 'G2', studentNames: 'Sneha Patil, Rohan Gaikwad', projectTopic: 'AI-based Attendance System', projectGuide: 'Prof. S. K. Jadhav', stage: 'Stage 1', documentType: 'Synopsis', status: 'needs_correction', fileName: 'synopsis_g2.pdf' },
-  { id: '6', serialNumber: '6', enrollmentNumber: '23611780356', groupNumber: 'G2', studentNames: 'Sneha Patil, Rohan Gaikwad', projectTopic: 'AI-based Attendance System', projectGuide: 'Prof. S. K. Jadhav', stage: 'Stage 1', documentType: 'Weekly Diary', status: 'pending', fileName: 'diary_g2.pdf' },
-];
-
-interface GroupDocumentSummary {
-  groupNumber: string;
-  projectTitle: string;
-  projectGuide: string;
-  totalDocuments: number;
-  submittedDocuments: number;
-  submittedList: string[];
-  pendingList: string[];
-}
-
-const mockGroupSummaries: GroupDocumentSummary[] = [
-  { groupNumber: 'G1', projectTitle: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir', totalDocuments: 7, submittedDocuments: 3, submittedList: ['Synopsis', 'PPT Stage One', 'Black Book'], pendingList: ['Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'] },
-  { groupNumber: 'G2', projectTitle: 'AI-based Attendance System', projectGuide: 'Prof. S. K. Jadhav', totalDocuments: 7, submittedDocuments: 2, submittedList: ['Synopsis', 'Weekly Diary'], pendingList: ['PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Sponsorship Letter'] },
-  { groupNumber: 'G3', projectTitle: 'Predictive Analytics Dashboard', projectGuide: 'Prof. G. K. Ghate', totalDocuments: 7, submittedDocuments: 1, submittedList: ['Synopsis'], pendingList: ['PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'] },
-  { groupNumber: 'G4', projectTitle: 'Voice-Controlled Home Automation', projectGuide: 'Prof. V. B. Ohol', totalDocuments: 7, submittedDocuments: 0, submittedList: [], pendingList: ['Synopsis', 'PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'] },
-];
 
 interface DocumentsPageProps {
   role: 'admin' | 'mentor';
@@ -60,19 +45,64 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
   const [department, setDepartment] = useState('');
   const [showDocuments, setShowDocuments] = useState(false);
   const [docTab, setDocTab] = useState('current');
+  const { toast } = useToast();
 
-  const isCurrentYear = academicYear === '2025-26';
-  const isPastYear = academicYear === '2023-24' || academicYear === '2024-25';
+  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchDocuments = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (academicYear) params.append('academicYear', academicYear);
+      if (department) params.append('department', department);
+
+      const data = await apiGet<{
+        success: boolean;
+        count: number;
+        data: DocumentRecord[];
+      }>(`/documents?${params.toString()}`);
+
+      if (data.success) {
+        setDocuments(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch documents:', error);
+      toast({ title: 'Error', description: 'Failed to load documents.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showDocuments) {
+      fetchDocuments();
+    }
+  }, [showDocuments]);
 
   const getStatusBadge = (status: string) => {
-    if (isPastYear) return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
     switch (status) {
-      case 'verified': return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
+      case 'approved': return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
       case 'needs_correction': return <Badge className="bg-warning text-warning-foreground"><AlertTriangle className="h-3 w-3 mr-1" />Needs Correction</Badge>;
       case 'pending': return <Badge className="bg-info text-info-foreground"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
       default: return <Badge variant="secondary">Not Submitted</Badge>;
     }
   };
+
+  // Group documents by group for summary view
+  const groupSummaries = documents.reduce<Record<string, { groupName: string; projectTitle: string; projectGuide: string; docs: DocumentRecord[] }>>((acc, doc) => {
+    const gid = doc.groupId?._id || 'unknown';
+    if (!acc[gid]) {
+      acc[gid] = {
+        groupName: doc.groupId?.name || 'Unknown',
+        projectTitle: doc.groupId?.projectTitle || '',
+        projectGuide: doc.groupId?.projectGuide || '',
+        docs: [],
+      };
+    }
+    acc[gid].docs.push(doc);
+    return acc;
+  }, {});
 
   return (
     <DashboardLayout role={role}>
@@ -106,131 +136,129 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
         </Card>
 
         {showDocuments && (
-          <Tabs value={docTab} onValueChange={setDocTab} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="current">Current Upload</TabsTrigger>
-              <TabsTrigger value="group_submitted">Group Submitted Documents</TabsTrigger>
-            </TabsList>
+          loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Tabs value={docTab} onValueChange={setDocTab} className="w-full">
+              <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsTrigger value="current">All Documents ({documents.length})</TabsTrigger>
+                <TabsTrigger value="group_submitted">Group Summary ({Object.keys(groupSummaries).length})</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="current" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2"><FolderOpen className="h-5 w-5" />Current Documents - {academicYear}</CardTitle>
-                  <CardDescription>Recently uploaded documents by students</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-lg border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50">
-                          <TableHead className="w-[60px]">S.No.</TableHead>
-                          <TableHead>Enrollment No.</TableHead>
-                          <TableHead>Group No.</TableHead>
-                          <TableHead>Students</TableHead>
-                          <TableHead>Topic</TableHead>
-                          <TableHead>Project Guide</TableHead>
-                          <TableHead>Stage</TableHead>
-                          <TableHead>Document Type</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {mockDocumentRecords.map((doc) => (
-                          <TableRow key={doc.id} className="hover:bg-muted/30">
-                            <TableCell>{doc.serialNumber}</TableCell>
-                            <TableCell className="font-mono">{doc.enrollmentNumber}</TableCell>
-                            <TableCell>{doc.groupNumber}</TableCell>
-                            <TableCell className="max-w-[150px] truncate">{doc.studentNames}</TableCell>
-                            <TableCell className="max-w-[150px] truncate">{doc.projectTopic}</TableCell>
-                            <TableCell>{doc.projectGuide}</TableCell>
-                            <TableCell>{doc.stage}</TableCell>
-                            <TableCell>
-                              <Button variant="link" className="p-0 h-auto text-primary underline">{doc.documentType}</Button>
-                            </TableCell>
-                            <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                {isPastYear ? (
-                                  <>
+              <TabsContent value="current" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2"><FolderOpen className="h-5 w-5" />Documents - {academicYear}</CardTitle>
+                    <CardDescription>{documents.length} documents found</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {documents.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">No documents found for this academic year.</p>
+                    ) : (
+                      <div className="rounded-lg border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="w-[60px]">S.No.</TableHead>
+                              <TableHead>Group</TableHead>
+                              <TableHead>Uploaded By</TableHead>
+                              <TableHead>Project</TableHead>
+                              <TableHead>Guide</TableHead>
+                              <TableHead>Stage</TableHead>
+                              <TableHead>Document Type</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {documents.map((doc, idx) => (
+                              <TableRow key={doc._id} className="hover:bg-muted/30">
+                                <TableCell>{idx + 1}</TableCell>
+                                <TableCell>{doc.groupId?.name || '-'}</TableCell>
+                                <TableCell className="max-w-[150px] truncate">{doc.uploadedBy?.name || '-'}</TableCell>
+                                <TableCell className="max-w-[150px] truncate">{doc.groupId?.projectTitle || '-'}</TableCell>
+                                <TableCell>{doc.groupId?.projectGuide || '-'}</TableCell>
+                                <TableCell>Stage {doc.stage}</TableCell>
+                                <TableCell>
+                                  <Button variant="link" className="p-0 h-auto text-primary underline">{doc.type}</Button>
+                                </TableCell>
+                                <TableCell>{getStatusBadge(doc.status)}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-1">
                                     <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
                                     <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button variant="ghost" size="sm"><Upload className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
-                                    {doc.status !== 'not_submitted' && <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>}
                                     {doc.status === 'pending' && (
                                       <>
                                         <Button size="sm" className="btn-success">Approve</Button>
                                         <Button size="sm" variant="destructive">Reject</Button>
-                                        <Button size="sm" variant="outline" className="text-warning border-warning">Correction</Button>
                                       </>
                                     )}
-                                  </>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="group_submitted" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mockGroupSummaries.map((group) => {
-                  const progressPercent = Math.round((group.submittedDocuments / group.totalDocuments) * 100);
-                  return (
-                    <Card key={group.groupNumber} className="hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Users className="h-5 w-5 text-primary" />
-                            {group.groupNumber}
-                          </CardTitle>
-                          <Badge variant="secondary">{group.submittedDocuments}/{group.totalDocuments} docs</Badge>
-                        </div>
-                        <CardDescription className="text-sm">{group.projectTitle}</CardDescription>
-                        <p className="text-xs text-muted-foreground">Guide: {group.projectGuide}</p>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Documents Progress</span>
-                              <span className="font-medium">{progressPercent}%</span>
-                            </div>
-                            <Progress value={progressPercent} className="h-2" />
+              <TabsContent value="group_submitted" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(groupSummaries).map(([gid, group]) => {
+                    const approvedDocs = group.docs.filter(d => d.status === 'approved').length;
+                    const progressPercent = group.docs.length > 0 ? Math.round((approvedDocs / group.docs.length) * 100) : 0;
+                    return (
+                      <Card key={gid} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Users className="h-5 w-5 text-primary" />
+                              {group.groupName}
+                            </CardTitle>
+                            <Badge variant="secondary">{approvedDocs}/{group.docs.length} docs</Badge>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium text-success flex items-center gap-1 mb-1"><CheckCircle className="h-3 w-3" />Submitted</p>
-                            <div className="flex flex-wrap gap-1">
-                              {group.submittedList.length > 0 ? group.submittedList.map((d, i) => (
-                                <Badge key={i} className="bg-success text-success-foreground text-xs">{d}</Badge>
-                              )) : <span className="text-xs text-muted-foreground">None</span>}
+                          <CardDescription className="text-sm">{group.projectTitle}</CardDescription>
+                          <p className="text-xs text-muted-foreground">Guide: {group.projectGuide}</p>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-muted-foreground">Documents Progress</span>
+                                <span className="font-medium">{progressPercent}%</span>
+                              </div>
+                              <Progress value={progressPercent} className="h-2" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-success flex items-center gap-1 mb-1"><CheckCircle className="h-3 w-3" />Approved</p>
+                              <div className="flex flex-wrap gap-1">
+                                {group.docs.filter(d => d.status === 'approved').length > 0 ? group.docs.filter(d => d.status === 'approved').map((d) => (
+                                  <Badge key={d._id} className="bg-success text-success-foreground text-xs">{d.type}</Badge>
+                                )) : <span className="text-xs text-muted-foreground">None</span>}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-warning flex items-center gap-1 mb-1"><Clock className="h-3 w-3" />Pending</p>
+                              <div className="flex flex-wrap gap-1">
+                                {group.docs.filter(d => d.status !== 'approved').map((d) => (
+                                  <Badge key={d._id} variant="outline" className="text-warning border-warning text-xs">{d.type}</Badge>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <p className="text-xs font-medium text-warning flex items-center gap-1 mb-1"><Clock className="h-3 w-3" />Pending</p>
-                            <div className="flex flex-wrap gap-1">
-                              {group.pendingList.map((d, i) => (
-                                <Badge key={i} variant="outline" className="text-warning border-warning text-xs">{d}</Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
-          </Tabs>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )
         )}
       </div>
     </DashboardLayout>

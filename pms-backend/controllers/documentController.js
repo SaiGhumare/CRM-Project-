@@ -1,4 +1,5 @@
 const Document = require('../models/Document');
+const StudentGroup = require('../models/StudentGroup');
 
 // @desc    Upload a document
 // @route   POST /api/documents
@@ -36,13 +37,22 @@ const uploadDocument = async (req, res) => {
 // @access  Private
 const getAllDocuments = async (req, res) => {
   try {
-    const { type, stage, groupId, status } = req.query;
+    const { type, stage, groupId, status, academicYear, department } = req.query;
     const query = {};
 
     if (type) query.type = type;
     if (stage) query.stage = parseInt(stage);
     if (groupId) query.groupId = groupId;
     if (status) query.status = status;
+
+    // Filter by academic year and/or department through group
+    if (academicYear || department) {
+      const groupQuery = {};
+      if (academicYear) groupQuery.academicYear = academicYear;
+      if (department) groupQuery.department = department;
+      const groups = await StudentGroup.find(groupQuery).select('_id');
+      query.groupId = { $in: groups.map(g => g._id) };
+    }
 
     const docs = await Document.find(query)
       .populate('uploadedBy', '-password')

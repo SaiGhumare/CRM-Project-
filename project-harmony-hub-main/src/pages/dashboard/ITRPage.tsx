@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,27 +14,32 @@ import {
   Download,
   Briefcase,
   AlertTriangle,
+  Loader2,
 } from 'lucide-react';
+import { apiGet } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock ITR data
-interface MockITRDocument {
-  id: string;
-  studentName: string;
-  enrollmentNumber: string;
-  type: 'itr_report' | 'offer_letter';
-  fileName: string;
-  status: DocumentStatus;
-  uploadedAt: string;
-  companyName?: string;
+// Backend types
+interface ITRRecord {
+  _id: string;
+  companyName: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  createdAt: string;
+  dailyDetails: { date: string; description: string; hours: number }[];
+  studentId?: {
+    _id: string;
+    name: string;
+    enrollmentNumber?: string;
+    rollNumber?: string;
+    academicYear?: string;
+  };
+  coordinatorId?: {
+    _id: string;
+    name: string;
+  };
 }
-
-const mockITRDocuments: MockITRDocument[] = [
-  { id: '1', studentName: 'John Doe', enrollmentNumber: '2021CO001', type: 'offer_letter', fileName: 'offer_letter_techcorp.pdf', status: 'approved', uploadedAt: '2024-01-10', companyName: 'TechCorp Solutions' },
-  { id: '2', studentName: 'John Doe', enrollmentNumber: '2021CO001', type: 'itr_report', fileName: 'itr_report_final.pdf', status: 'pending', uploadedAt: '2024-01-15', companyName: 'TechCorp Solutions' },
-  { id: '3', studentName: 'Jane Smith', enrollmentNumber: '2021CO002', type: 'offer_letter', fileName: 'offer_letter_innovate.pdf', status: 'approved', uploadedAt: '2024-01-08', companyName: 'Innovate Labs' },
-  { id: '4', studentName: 'Jane Smith', enrollmentNumber: '2021CO002', type: 'itr_report', fileName: 'itr_report.pdf', status: 'needs_correction', uploadedAt: '2024-01-12', companyName: 'Innovate Labs' },
-  { id: '5', studentName: 'Bob Wilson', enrollmentNumber: '2021CO003', type: 'offer_letter', fileName: 'offer_letter.pdf', status: 'pending', uploadedAt: '2024-01-18', companyName: 'DataSoft Inc' },
-];
 
 interface ITRPageProps {
   role: 'admin' | 'mentor';
@@ -44,6 +49,40 @@ export default function ITRPage({ role }: ITRPageProps) {
   const [academicYear, setAcademicYear] = useState('');
   const [department, setDepartment] = useState('');
   const [showDocuments, setShowDocuments] = useState(false);
+  const { toast } = useToast();
+
+  const [records, setRecords] = useState<ITRRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchITR = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (academicYear) params.append('academicYear', academicYear);
+      if (department) params.append('department', department);
+
+      const data = await apiGet<{
+        success: boolean;
+        count: number;
+        data: ITRRecord[];
+      }>(`/itr?${params.toString()}`);
+
+      if (data.success) {
+        setRecords(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch ITR:', error);
+      toast({ title: 'Error', description: 'Failed to load ITR records.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showDocuments) {
+      fetchITR();
+    }
+  }, [showDocuments]);
 
   const handleView = () => {
     if (academicYear && department) {
@@ -51,7 +90,7 @@ export default function ITRPage({ role }: ITRPageProps) {
     }
   };
 
-  const getStatusBadge = (status: DocumentStatus) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
         return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
@@ -62,32 +101,20 @@ export default function ITRPage({ role }: ITRPageProps) {
     }
   };
 
-  const getTypeLabel = (type: 'itr_report' | 'offer_letter') => {
-    return type === 'itr_report' ? 'ITR Report' : 'Offer Letter';
-  };
-
-  const getTypeIcon = (type: 'itr_report' | 'offer_letter') => {
-    return type === 'itr_report' ? (
-      <FileText className="h-5 w-5 text-primary" />
-    ) : (
-      <Briefcase className="h-5 w-5 text-info" />
-    );
-  };
-
   return (
     <DashboardLayout role={role}>
       <div className="space-y-6 animate-fade-in">
         {/* Page Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">Industrial Training (ITR)</h1>
-          <p className="text-muted-foreground">Review ITR reports and offer letters</p>
+          <p className="text-muted-foreground">Review ITR reports and records</p>
         </div>
 
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Filter ITR Documents</CardTitle>
-            <CardDescription>Select academic year and department to view ITR documents</CardDescription>
+            <CardTitle className="text-lg">Filter ITR Records</CardTitle>
+            <CardDescription>Select academic year and department to view ITR records</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4 items-end">
@@ -129,67 +156,73 @@ export default function ITRPage({ role }: ITRPageProps) {
           </CardContent>
         </Card>
 
-        {/* ITR Documents List */}
+        {/* ITR Records List */}
         {showDocuments && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                ITR Documents - {department}
-              </CardTitle>
-              <CardDescription>
-                Industrial Training Reports and Offer Letters ({mockITRDocuments.length} documents)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockITRDocuments.map((doc) => (
-                  <div 
-                    key={doc.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        {getTypeIcon(doc.type)}
-                      </div>
-                      <div>
-                        <p className="font-medium">{getTypeLabel(doc.type)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {doc.studentName} ({doc.enrollmentNumber})
-                        </p>
-                        {doc.companyName && (
-                          <p className="text-sm text-primary">
-                            Company: {doc.companyName}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Uploaded: {doc.uploadedAt}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(doc.status)}
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
-                      </Button>
-                      {doc.status === 'pending' && (
-                        <>
-                          <Button size="sm" className="btn-success">
-                            Approve
+          loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  ITR Records - {academicYear} ({department})
+                </CardTitle>
+                <CardDescription>
+                  {records.length} ITR records found
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {records.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No ITR records found for this academic year.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {records.map((record) => (
+                      <div 
+                        key={record._id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Briefcase className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{record.studentId?.name || 'Unknown Student'}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Roll: {record.studentId?.rollNumber || '-'}
+                            </p>
+                            <p className="text-sm text-primary">
+                              Company: {record.companyName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {record.startDate ? new Date(record.startDate).toLocaleDateString() : ''} — {record.endDate ? new Date(record.endDate).toLocaleDateString() : 'Ongoing'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Daily entries: {record.dailyDetails?.length || 0}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(record.status)}
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-1" />
+                            Details
                           </Button>
-                          <Button size="sm" variant="outline" className="text-warning border-warning hover:bg-warning/10">
-                            Correction
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                          {record.status === 'pending' && (
+                            <Button size="sm" className="btn-success">
+                              Approve
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          )
         )}
       </div>
     </DashboardLayout>

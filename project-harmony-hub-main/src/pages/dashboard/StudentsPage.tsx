@@ -59,6 +59,7 @@ export default function StudentsPage({ role }: StudentsPageProps) {
     try {
       const params = new URLSearchParams();
       if (department) params.append('department', department);
+      if (academicYear) params.append('academicYear', academicYear);
       if (searchQuery) params.append('search', searchQuery);
       params.append('limit', '100'); // Get all students
 

@@ -12,8 +12,17 @@ connectDB();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS — allow frontend origin (set CORS_ORIGIN env var in production)
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

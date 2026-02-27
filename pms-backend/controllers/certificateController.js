@@ -1,4 +1,5 @@
 const Certificate = require('../models/Certificate');
+const User = require('../models/User');
 
 // @desc    Upload a certificate
 // @route   POST /api/certificates
@@ -33,11 +34,20 @@ const uploadCertificate = async (req, res) => {
 // @access  Private (admin, mentor)
 const getAllCertificates = async (req, res) => {
   try {
-    const { type, verified } = req.query;
+    const { type, verified, academicYear, department } = req.query;
     const query = {};
 
     if (type) query.type = type;
     if (verified !== undefined) query.verified = verified === 'true';
+
+    // Filter by academic year and/or department through student
+    if (academicYear || department) {
+      const studentQuery = { role: 'student' };
+      if (academicYear) studentQuery.academicYear = academicYear;
+      if (department) studentQuery.department = department;
+      const students = await User.find(studentQuery).select('_id');
+      query.uploadedBy = { $in: students.map(s => s._id) };
+    }
 
     const certs = await Certificate.find(query)
       .populate('uploadedBy', '-password')

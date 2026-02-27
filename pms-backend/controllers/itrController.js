@@ -32,9 +32,18 @@ const createITR = async (req, res) => {
 // @access  Private (admin, itr_coordinator)
 const getAllITR = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, academicYear, department } = req.query;
     const query = {};
     if (status) query.status = status;
+
+    // Filter by academic year and/or department through student
+    if (academicYear || department) {
+      const studentQuery = { role: 'student' };
+      if (academicYear) studentQuery.academicYear = academicYear;
+      if (department) studentQuery.department = department;
+      const students = await User.find(studentQuery).select('_id');
+      query.studentId = { $in: students.map(s => s._id) };
+    }
 
     const records = await ITR.find(query)
       .populate('studentId', '-password')
@@ -134,8 +143,20 @@ const addDailyDetail = async (req, res) => {
 // @access  Private (itr_coordinator, admin)
 const getITRStudents = async (req, res) => {
   try {
+    const { academicYear, department } = req.query;
+    const itrQuery = {};
+
+    // Filter by academic year and/or department through student
+    if (academicYear || department) {
+      const studentQuery = { role: 'student' };
+      if (academicYear) studentQuery.academicYear = academicYear;
+      if (department) studentQuery.department = department;
+      const students = await User.find(studentQuery).select('_id');
+      itrQuery.studentId = { $in: students.map(s => s._id) };
+    }
+
     // Get all ITR records and group by student
-    const records = await ITR.find()
+    const records = await ITR.find(itrQuery)
       .populate('studentId', '-password')
       .populate('coordinatorId', '-password')
       .sort({ createdAt: -1 });

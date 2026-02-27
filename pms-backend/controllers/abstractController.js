@@ -1,4 +1,5 @@
 const Abstract = require('../models/Abstract');
+const StudentGroup = require('../models/StudentGroup');
 
 // @desc    Submit an abstract
 // @route   POST /api/abstracts
@@ -31,9 +32,18 @@ const submitAbstract = async (req, res) => {
 // @access  Private
 const getAllAbstracts = async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, academicYear, department } = req.query;
     const query = {};
     if (status) query.status = status;
+
+    // Filter by academic year and/or department through group
+    if (academicYear || department) {
+      const groupQuery = {};
+      if (academicYear) groupQuery.academicYear = academicYear;
+      if (department) groupQuery.department = department;
+      const groups = await StudentGroup.find(groupQuery).select('_id');
+      query.groupId = { $in: groups.map(g => g._id) };
+    }
 
     const abstracts = await Abstract.find(query)
       .populate('groupId')

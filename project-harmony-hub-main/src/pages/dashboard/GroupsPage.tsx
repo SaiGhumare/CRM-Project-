@@ -58,11 +58,14 @@ export default function GroupsPage({ role }: GroupsPageProps) {
   const fetchGroups = async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (academicYear) params.append('academicYear', academicYear);
+      if (department) params.append('department', department);
       const data = await apiGet<{
         success: boolean;
         count: number;
         data: GroupRecord[];
-      }>('/groups');
+      }>(`/groups?${params.toString()}`);
 
       if (data.success) {
         setGroups(data.data);

@@ -25,7 +25,11 @@ const getAllMentors = async (req, res) => {
 // @access  Private
 const getMentorGroups = async (req, res) => {
   try {
-    const groups = await StudentGroup.find({ mentorId: req.params.id })
+    const { academicYear } = req.query;
+    const query = { mentorId: req.params.id };
+    if (academicYear) query.academicYear = academicYear;
+
+    const groups = await StudentGroup.find(query)
       .populate('members', '-password')
       .populate('mentorId', '-password')
       .sort({ name: 1 });

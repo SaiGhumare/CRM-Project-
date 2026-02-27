@@ -5,12 +5,16 @@ const User = require('../models/User');
 // @access  Private (admin, mentor)
 const getAllStudents = async (req, res) => {
   try {
-    const { department, search, page = 1, limit = 50 } = req.query;
+    const { department, academicYear, search, page = 1, limit = 50 } = req.query;
 
     const query = { role: 'student' };
 
     if (department) {
       query.department = department;
+    }
+
+    if (academicYear) {
+      query.academicYear = academicYear;
     }
 
     if (search) {

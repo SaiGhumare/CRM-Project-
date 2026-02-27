@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
   Clock, 
   Download,
   MessageSquare,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -24,54 +25,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { apiGet } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock abstract data
-interface MockAbstract {
-  id: string;
-  groupName: string;
+// Backend abstract type
+interface AbstractRecord {
+  _id: string;
   title: string;
   description: string;
   status: AbstractStatus;
-  submittedAt: string;
+  createdAt: string;
   feedback?: string;
+  groupId?: {
+    _id: string;
+    name: string;
+    projectTitle: string;
+    projectGuide: string;
+  };
+  submittedBy?: {
+    _id: string;
+    name: string;
+  };
+  reviewedBy?: {
+    _id: string;
+    name: string;
+  };
+  reviewedAt?: string;
 }
-
-const mockAbstracts: MockAbstract[] = [
-  { 
-    id: '1', 
-    groupName: 'TechnoVision', 
-    title: 'Smart Campus Management System', 
-    description: 'A comprehensive system for managing campus resources including classrooms, labs, and equipment using IoT sensors and cloud-based analytics.',
-    status: 'pending',
-    submittedAt: '2024-01-15',
-  },
-  { 
-    id: '2', 
-    groupName: 'CodeCrafters', 
-    title: 'AI-based Attendance System', 
-    description: 'An automated attendance system using facial recognition technology to mark student attendance in real-time with anti-spoofing measures.',
-    status: 'approved',
-    submittedAt: '2024-01-10',
-    feedback: 'Excellent concept with practical application. Proceed with implementation.',
-  },
-  { 
-    id: '3', 
-    groupName: 'DataMiners', 
-    title: 'Predictive Analytics Dashboard', 
-    description: 'A dashboard that uses machine learning to predict student performance and identify at-risk students for early intervention.',
-    status: 'rejected',
-    submittedAt: '2024-01-08',
-    feedback: 'The scope is too broad. Please narrow down the focus area and resubmit.',
-  },
-  { 
-    id: '4', 
-    groupName: 'AI Squad', 
-    title: 'Voice-Controlled Home Automation', 
-    description: 'A low-cost home automation system with voice commands using natural language processing and IoT devices.',
-    status: 'pending',
-    submittedAt: '2024-01-14',
-  },
-];
 
 interface AbstractsPageProps {
   role: 'admin' | 'mentor';
@@ -81,10 +61,46 @@ export default function AbstractsPage({ role }: AbstractsPageProps) {
   const [academicYear, setAcademicYear] = useState('');
   const [department, setDepartment] = useState('');
   const [showAbstracts, setShowAbstracts] = useState(false);
-  const [selectedAbstract, setSelectedAbstract] = useState<MockAbstract | null>(null);
+  const [selectedAbstract, setSelectedAbstract] = useState<AbstractRecord | null>(null);
   const [feedback, setFeedback] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
+  const { toast } = useToast();
+
+  // Real data states
+  const [abstracts, setAbstracts] = useState<AbstractRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch abstracts from backend
+  const fetchAbstracts = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (academicYear) params.append('academicYear', academicYear);
+      if (department) params.append('department', department);
+
+      const data = await apiGet<{
+        success: boolean;
+        count: number;
+        data: AbstractRecord[];
+      }>(`/abstracts?${params.toString()}`);
+
+      if (data.success) {
+        setAbstracts(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch abstracts:', error);
+      toast({ title: 'Error', description: 'Failed to load abstracts.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAbstracts) {
+      fetchAbstracts();
+    }
+  }, [showAbstracts]);
 
   const handleView = () => {
     if (academicYear && department) {
@@ -103,21 +119,39 @@ export default function AbstractsPage({ role }: AbstractsPageProps) {
     }
   };
 
-  const handleAction = (abstract: MockAbstract, action: 'approve' | 'reject') => {
+  const handleAction = (abstract: AbstractRecord, action: 'approve' | 'reject') => {
     setSelectedAbstract(abstract);
     setActionType(action);
     setFeedback('');
     setDialogOpen(true);
   };
 
-  const handleSubmitAction = () => {
-    // In a real app, this would call an API
-    console.log(`${actionType} abstract:`, selectedAbstract?.id, 'Feedback:', feedback);
+  const handleSubmitAction = async () => {
+    if (!selectedAbstract) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/abstracts/${selectedAbstract._id}/review`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: actionType === 'approve' ? 'approved' : 'rejected', feedback }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast({ title: 'Success', description: `Abstract ${actionType === 'approve' ? 'approved' : 'rejected'} successfully.` });
+        fetchAbstracts(); // Refresh list
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update abstract.', variant: 'destructive' });
+    }
     setDialogOpen(false);
     setSelectedAbstract(null);
     setActionType(null);
     setFeedback('');
   };
+
+  const pendingCount = abstracts.filter(a => a.status === 'pending').length;
+  const approvedCount = abstracts.filter(a => a.status === 'approved').length;
+  const rejectedCount = abstracts.filter(a => a.status === 'rejected').length;
 
   return (
     <DashboardLayout role={role}>
@@ -177,76 +211,94 @@ export default function AbstractsPage({ role }: AbstractsPageProps) {
         {/* Abstracts List */}
         {showAbstracts && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                Abstracts - {department} ({mockAbstracts.length} total)
-              </h2>
-              <div className="flex gap-2">
-                <Badge variant="outline">Pending: {mockAbstracts.filter(a => a.status === 'pending').length}</Badge>
-                <Badge variant="outline" className="text-success border-success">Approved: {mockAbstracts.filter(a => a.status === 'approved').length}</Badge>
-                <Badge variant="outline" className="text-destructive border-destructive">Rejected: {mockAbstracts.filter(a => a.status === 'rejected').length}</Badge>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            </div>
-
-            {mockAbstracts.map((abstract) => (
-              <Card key={abstract.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        <CardTitle className="text-base">{abstract.title}</CardTitle>
-                      </div>
-                      <CardDescription>
-                        Group: <span className="font-medium">{abstract.groupName}</span> • 
-                        Submitted: {abstract.submittedAt}
-                      </CardDescription>
-                    </div>
-                    {getStatusBadge(abstract.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">{abstract.description}</p>
-                  
-                  {abstract.feedback && (
-                    <div className="bg-muted/50 rounded-lg p-3 mb-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">
-                        <MessageSquare className="h-3 w-3 inline mr-1" />
-                        Feedback:
-                      </p>
-                      <p className="text-sm">{abstract.feedback}</p>
-                    </div>
-                  )}
-
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">
+                    Abstracts - {department} ({abstracts.length} total)
+                  </h2>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                    {abstract.status === 'pending' && (
-                      <>
-                        <Button 
-                          size="sm" 
-                          className="btn-success"
-                          onClick={() => handleAction(abstract, 'approve')}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => handleAction(abstract, 'reject')}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </>
-                    )}
+                    <Badge variant="outline">Pending: {pendingCount}</Badge>
+                    <Badge variant="outline" className="text-success border-success">Approved: {approvedCount}</Badge>
+                    <Badge variant="outline" className="text-destructive border-destructive">Rejected: {rejectedCount}</Badge>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+
+                {abstracts.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center text-muted-foreground">
+                      No abstracts found for this academic year.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  abstracts.map((abstract) => (
+                    <Card key={abstract._id} className="hover:shadow-md transition-shadow">
+                      <CardHeader>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-5 w-5 text-primary" />
+                              <CardTitle className="text-base">{abstract.title}</CardTitle>
+                            </div>
+                            <CardDescription>
+                              Group: <span className="font-medium">{abstract.groupId?.name}</span> • 
+                              Guide: <span className="font-medium">{abstract.groupId?.projectGuide}</span> •
+                              Submitted by: <span className="font-medium">{abstract.submittedBy?.name}</span> •
+                              Date: {new Date(abstract.createdAt).toLocaleDateString()}
+                            </CardDescription>
+                          </div>
+                          {getStatusBadge(abstract.status)}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">{abstract.description}</p>
+                        
+                        {abstract.feedback && (
+                          <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              <MessageSquare className="h-3 w-3 inline mr-1" />
+                              Feedback ({abstract.reviewedBy?.name}):
+                            </p>
+                            <p className="text-sm">{abstract.feedback}</p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </Button>
+                          {abstract.status === 'pending' && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                className="btn-success"
+                                onClick={() => handleAction(abstract, 'approve')}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => handleAction(abstract, 'reject')}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </>
+            )}
           </div>
         )}
 
