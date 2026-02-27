@@ -132,13 +132,13 @@ export default function Login() {
               </div>
 
               {/* Login Credentials Info */}
-              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+              {/* <div className="bg-muted/50 rounded-lg p-3 text-sm">
                 <p className="font-medium text-muted-foreground mb-1">Login Credentials:</p>
                 <p className="text-xs text-muted-foreground">Admin: admin@sandip.edu / admin123</p>
                 <p className="text-xs text-muted-foreground">Mentor: vb.ohol@sandip.edu / mentor123</p>
                 <p className="text-xs text-muted-foreground">Student: more.lalit.dilip@sandip.edu / student123</p>
                 <p className="text-xs text-muted-foreground">ITR: itr@sandip.edu / itr123</p>
-              </div>
+              </div> */}
             </CardContent>
 
             <CardFooter className="flex flex-col gap-4">
