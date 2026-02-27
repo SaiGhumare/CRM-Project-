@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,21 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DEPARTMENTS, ACADEMIC_YEARS, Student } from '@/types';
-import { Eye, Search, Download, Plus, Save } from 'lucide-react';
+import { DEPARTMENTS, ACADEMIC_YEARS } from '@/types';
+import { Eye, Search, Download, Plus, Save, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { apiGet } from '@/lib/api';
 
-const mockStudents: (Student & { division: string; className: string; groupNo: string; mentorName: string })[] = [
-  { id: '1', name: 'Purva Santosh Deshmane', email: 'purva@sandip.edu', enrollmentNumber: '23611780192', rollNumber: '01', department: 'CO', division: 'A', className: 'TY Diploma', groupNo: 'G1', mentorName: 'Prof. P. B. Datir' },
-  { id: '2', name: 'Arpita Sanjay Galankar', email: 'arpita@sandip.edu', enrollmentNumber: '23611780234', rollNumber: '02', department: 'CO', division: 'A', className: 'TY Diploma', groupNo: 'G1', mentorName: 'Prof. P. B. Datir' },
-  { id: '3', name: 'Sneha Patil', email: 'sneha@sandip.edu', enrollmentNumber: '23611780356', rollNumber: '03', department: 'CO', division: 'A', className: 'TY Diploma', groupNo: 'G2', mentorName: 'Prof. S. K. Jadhav' },
-  { id: '4', name: 'Rohan Gaikwad', email: 'rohan@sandip.edu', enrollmentNumber: '23611780478', rollNumber: '04', department: 'CO', division: 'B', className: 'TY Diploma', groupNo: 'G2', mentorName: 'Prof. S. K. Jadhav' },
-  { id: '5', name: 'Vikram Singh', email: 'vikram@sandip.edu', enrollmentNumber: '23611780590', rollNumber: '05', department: 'CO', division: 'B', className: 'TY Diploma', groupNo: 'G3', mentorName: 'Prof. G. K. Ghate' },
-  { id: '6', name: 'Neha Sharma', email: 'neha@sandip.edu', enrollmentNumber: '23611780612', rollNumber: '06', department: 'CO', division: 'B', className: 'TY Diploma', groupNo: 'G3', mentorName: 'Prof. G. K. Ghate' },
-  { id: '7', name: 'Akash Desai', email: 'akash@sandip.edu', enrollmentNumber: '23611780734', rollNumber: '07', department: 'CO', division: 'A', className: 'TY Diploma', groupNo: 'G4', mentorName: 'Prof. V. B. Ohol' },
-  { id: '8', name: 'Sakshi More', email: 'sakshi@sandip.edu', enrollmentNumber: '23611780856', rollNumber: '08', department: 'CO', division: 'B', className: 'TY Diploma', groupNo: 'G4', mentorName: 'Prof. V. B. Ohol' },
-];
+// Type for student data from the backend
+interface StudentRecord {
+  _id: string;
+  name: string;
+  email: string;
+  enrollmentNumber: string;
+  rollNumber: string;
+  department: string;
+  division: string;
+  className: string;
+  groupId?: {
+    _id: string;
+    name: string;
+    projectGuide: string;
+    mentorId?: {
+      _id: string;
+      name: string;
+    };
+  };
+}
 
 interface StudentsPageProps {
   role: 'admin' | 'mentor';
@@ -37,22 +48,57 @@ export default function StudentsPage({ role }: StudentsPageProps) {
   const [newStudent, setNewStudent] = useState({ name: '', className: '', department: '', groupNo: '', enrollmentNumber: '23611780', division: '', rollNumber: '' });
   const { toast } = useToast();
 
-  const filteredStudents = mockStudents.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.enrollmentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.rollNumber.includes(searchQuery)
-  );
+  // Real data states
+  const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalStudents, setTotalStudents] = useState(0);
 
-  // Group students by mentor for "Assigned to Mentor" tab
-  const studentsByMentor = filteredStudents.reduce((acc, student) => {
-    if (!acc[student.mentorName]) acc[student.mentorName] = [];
-    acc[student.mentorName].push(student);
-    return acc;
-  }, {} as Record<string, typeof mockStudents>);
+  // Fetch students from the backend
+  const fetchStudents = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (department) params.append('department', department);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('limit', '100'); // Get all students
+
+      const data = await apiGet<{
+        success: boolean;
+        count: number;
+        total: number;
+        data: StudentRecord[];
+      }>(`/students?${params.toString()}`);
+
+      if (data.success) {
+        setStudents(data.data);
+        setTotalStudents(data.total);
+      }
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      toast({ title: 'Error', description: 'Failed to load students.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch when view is clicked or search changes
+  useEffect(() => {
+    if (showStudents) {
+      fetchStudents();
+    }
+  }, [showStudents, searchQuery]);
 
   const handleView = () => {
     if (academicYear && department) setShowStudents(true);
   };
+
+  // Group students by mentor for "Assigned to Mentor" tab
+  const studentsByMentor = students.reduce((acc, student) => {
+    const mentorName = student.groupId?.projectGuide || 'Unassigned';
+    if (!acc[mentorName]) acc[mentorName] = [];
+    acc[mentorName].push(student);
+    return acc;
+  }, {} as Record<string, StudentRecord[]>);
 
   const handleAddStudent = () => {
     setIsAddDialogOpen(false);
@@ -60,7 +106,7 @@ export default function StudentsPage({ role }: StudentsPageProps) {
     toast({ title: 'Student Added', description: 'Student has been added successfully.' });
   };
 
-  const renderStudentTable = (students: typeof mockStudents) => (
+  const renderStudentTable = (studentList: StudentRecord[]) => (
     <div className="rounded-lg border overflow-hidden">
       <Table>
         <TableHeader>
@@ -76,20 +122,28 @@ export default function StudentsPage({ role }: StudentsPageProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {students.map((student) => (
-            <TableRow key={student.id} className="hover:bg-muted/30">
-              <TableCell className="font-medium">{student.rollNumber}</TableCell>
-              <TableCell className="font-mono">{student.enrollmentNumber}</TableCell>
-              <TableCell>{student.name}</TableCell>
-              <TableCell>{student.division}</TableCell>
-              <TableCell>{student.groupNo}</TableCell>
-              <TableCell>{student.mentorName}</TableCell>
-              <TableCell className="text-muted-foreground">{student.email}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm" className="text-info">View Details</Button>
+          {studentList.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                No students found
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            studentList.map((student) => (
+              <TableRow key={student._id} className="hover:bg-muted/30">
+                <TableCell className="font-medium">{student.rollNumber}</TableCell>
+                <TableCell className="font-mono">{student.enrollmentNumber}</TableCell>
+                <TableCell>{student.name}</TableCell>
+                <TableCell>{student.division || '-'}</TableCell>
+                <TableCell>{student.groupId?.name || '-'}</TableCell>
+                <TableCell>{student.groupId?.projectGuide || '-'}</TableCell>
+                <TableCell className="text-muted-foreground">{student.email}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="sm" className="text-info">View Details</Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
@@ -135,7 +189,7 @@ export default function StudentsPage({ role }: StudentsPageProps) {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <CardTitle className="text-lg">Student List</CardTitle>
-                  <CardDescription>{department} - Academic Year {academicYear} ({filteredStudents.length} students)</CardDescription>
+                  <CardDescription>{department} - Academic Year {academicYear} ({totalStudents} students)</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative">
@@ -201,30 +255,37 @@ export default function StudentsPage({ role }: StudentsPageProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
-                  <TabsTrigger value="roll_call">Roll Call List</TabsTrigger>
-                  <TabsTrigger value="assigned_mentor">Students Assigned to Mentor</TabsTrigger>
-                </TabsList>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Loading students...</span>
+                </div>
+              ) : (
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
+                    <TabsTrigger value="roll_call">Roll Call List</TabsTrigger>
+                    <TabsTrigger value="assigned_mentor">Students Assigned to Mentor</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="roll_call">
-                  {renderStudentTable(filteredStudents)}
-                </TabsContent>
+                  <TabsContent value="roll_call">
+                    {renderStudentTable(students)}
+                  </TabsContent>
 
-                <TabsContent value="assigned_mentor">
-                  <div className="space-y-6">
-                    {Object.entries(studentsByMentor).map(([mentorName, students]) => (
-                      <div key={mentorName}>
-                        <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-primary" />
-                          {mentorName} ({students.length} students)
-                        </h3>
-                        {renderStudentTable(students)}
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="assigned_mentor">
+                    <div className="space-y-6">
+                      {Object.entries(studentsByMentor).map(([mentorName, mentorStudents]) => (
+                        <div key={mentorName}>
+                          <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-primary" />
+                            {mentorName} ({mentorStudents.length} students)
+                          </h3>
+                          {renderStudentTable(mentorStudents)}
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              )}
             </CardContent>
           </Card>
         )}

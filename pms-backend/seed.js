@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const User = require('./models/User');
 const StudentGroup = require('./models/StudentGroup');
 const Abstract = require('./models/Abstract');
+const Document = require('./models/Document');
+const Certificate = require('./models/Certificate');
 const Notice = require('./models/Notice');
 const ITR = require('./models/ITR');
 
@@ -28,19 +30,18 @@ const itrCoordinatorData = {
   department: 'CO',
 };
 
-// Mentors (from TYCO CPP guide names)
+// Mentors (from Project Group CSV — exact guide names)
 const mentorsData = [
-  { name: 'Prof. V.B. Ohol', email: 'vb.ohol@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. R.V. Deshpande', email: 'rv.deshpande@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. P.B. Datir', email: 'pb.datir@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. Y.N. Jadhav', email: 'yn.jadhav@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. R.S. Thete', email: 'rs.thete@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. G.P. Bharne', email: 'gp.bharne@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. R.K. Ghate', email: 'rk.ghate@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
-  { name: 'Prof. Y.D. Jadhav', email: 'yd.jadhav@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mr. V.B. Ohol', email: 'vb.ohol@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mrs. R.V. Deshpande', email: 'rv.deshpande@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mrs. P.B. Datir', email: 'pb.datir@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mr. Y.N. Jadhav', email: 'yn.jadhav@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mrs. R.S. Thete', email: 'rs.thete@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mrs. R.K. Ghate', email: 'rk.ghate@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
+  { name: 'Mrs. V.A. Wagh', email: 'va.wagh@sandip.edu', password: 'mentor123', role: 'mentor', department: 'CO' },
 ];
 
-// Students (from Roll Call List 2025-26)
+// Students (from Roll Call List 2025-26) — indexed by rollNumber for easy lookup
 const studentsData = [
   { rollNumber: '1', enrollmentNumber: '23611780171', name: 'More Lalit Dilip' },
   { rollNumber: '2', enrollmentNumber: '23611780172', name: 'Jagzap Anil Nana' },
@@ -112,26 +113,30 @@ const studentsData = [
   { rollNumber: '68', enrollmentNumber: '24611780007', name: 'Pagar Dnyaneshwari Padmakar' },
 ];
 
-// Groups (students will be assigned by roll number: 4 students per group)
-// Group 1 = roll 1-4, Group 2 = roll 5-8, etc.
+// Groups config from Project Group CSV — members referenced by rollNumber
+// Roll numbers map to studentsData array index: rollNumber "1" => index 0, "2" => index 1, etc.
+const rollToIndex = {};
+studentsData.forEach((s, i) => { rollToIndex[s.rollNumber] = i; });
+
 const groupsConfig = [
-  { name: 'G1', members: [0, 1, 2, 3], guideName: 'Prof. V.B. Ohol' },
-  { name: 'G2', members: [4, 5, 6, 7], guideName: 'Prof. R.V. Deshpande' },
-  { name: 'G3', members: [8, 9, 10, 11], guideName: 'Prof. R.V. Deshpande' },
-  { name: 'G4', members: [12, 13, 14, 15], guideName: 'Prof. P.B. Datir' },
-  { name: 'G5', members: [16, 17, 18, 19], guideName: 'Prof. V.B. Ohol' },
-  { name: 'G6', members: [20, 21, 22, 23], guideName: 'Prof. Y.N. Jadhav' },
-  { name: 'G7', members: [24, 25, 26, 27], guideName: 'Prof. Y.N. Jadhav' },
-  { name: 'G8', members: [28, 29, 30, 31], guideName: 'Prof. V.B. Ohol' },
-  { name: 'G9', members: [32, 33, 34, 35], guideName: 'Prof. R.S. Thete' },
-  { name: 'G10', members: [36, 37, 38, 39], guideName: 'Prof. R.V. Deshpande' },
-  { name: 'G11', members: [40, 41, 42, 43], guideName: 'Prof. Y.N. Jadhav' },
-  { name: 'G12', members: [44, 45, 46, 47], guideName: 'Prof. G.P. Bharne' },
-  { name: 'G13', members: [48, 49, 50, 51], guideName: 'Prof. G.P. Bharne' },
-  { name: 'G14', members: [52, 53, 54, 55], guideName: 'Prof. R.V. Deshpande' },
-  { name: 'G15', members: [56, 57, 58, 59], guideName: 'Prof. R.K. Ghate' },
-  { name: 'G16', members: [60, 61, 62, 63], guideName: 'Prof. P.B. Datir' },
-  { name: 'G17', members: [64, 65, 66, 67], guideName: 'Prof. Y.D. Jadhav' },
+  { name: 'G1',  rollNos: ['47','38','27','14'], guideName: 'Mr. V.B. Ohol',       projectTitle: 'Smart Salon Management' },
+  { name: 'G2',  rollNos: ['13','32','43'],       guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Automated Counting and Sorting using Image Segmentation and Detection' },
+  { name: 'G3',  rollNos: ['58','15','2','12'],   guideName: 'Mrs. R.S. Thete',     projectTitle: 'Platform for Events' },
+  { name: 'G4',  rollNos: ['34','6','18','25'],    guideName: 'Mrs. R.K. Ghate',     projectTitle: 'NBA-SAR Automation Platform of Point-4 (Student Performance)' },
+  { name: 'G5',  rollNos: ['44','29','51','24'],   guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Block Chain Technology' },
+  { name: 'G6',  rollNos: ['19','46','4','31'],    guideName: 'Mrs. R.S. Thete',     projectTitle: 'Digital Animal Market Platform' },
+  { name: 'G7',  rollNos: ['11','3','17','52'],    guideName: 'Mrs. R.K. Ghate',     projectTitle: 'Virtual Queue Management System' },
+  { name: 'G8',  rollNos: ['22','60'],             guideName: 'Mrs. P.B. Datir',     projectTitle: 'Project Management System' },
+  { name: 'G9',  rollNos: ['37','50','55','10'],   guideName: 'Mrs. V.A. Wagh',      projectTitle: 'Digital Garbage Management System' },
+  { name: 'G10', rollNos: ['8','16','59','61'],    guideName: 'Mr. Y.N. Jadhav',     projectTitle: 'OBE Tracking System (Point-3)' },
+  { name: 'G11', rollNos: ['49','41','54'],        guideName: 'Mrs. P.B. Datir',     projectTitle: 'Smart Tourist Safety Monitoring and Incident Response System' },
+  { name: 'G12', rollNos: ['9','30','26','20'],    guideName: 'Mr. Y.N. Jadhav',     projectTitle: 'AI-Based Smart Study Planner' },
+  { name: 'G13', rollNos: ['62','65','67','68'],   guideName: 'Mr. V.B. Ohol',       projectTitle: 'Time-Table Management System' },
+  { name: 'G14', rollNos: ['21','35','36','53'],   guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Accessibility Mapping Application for People with Disability' },
+  { name: 'G15', rollNos: ['56','57','64'],        guideName: 'Mrs. R.K. Ghate',     projectTitle: 'Mess Management System' },
+  { name: 'G16', rollNos: ['5','23','39','40'],    guideName: 'Mrs. R.S. Thete',     projectTitle: 'Safe Voice (Anonymous Reporting APP)' },
+  { name: 'G17', rollNos: ['66','42','45','28'],   guideName: 'Mrs. V.A. Wagh',      projectTitle: 'The End (Funeral Management and Crematorium Booking System)' },
+  { name: 'G18', rollNos: ['1','7','33','48'],     guideName: 'Mrs. P.B. Datir',     projectTitle: 'True Source (Facts Checker)' },
 ];
 
 // ─── Seed Function ───────────────────────────────────────────────────────
@@ -146,6 +151,8 @@ const seedDB = async () => {
     await User.deleteMany({});
     await StudentGroup.deleteMany({});
     await Abstract.deleteMany({});
+    await Document.deleteMany({});
+    await Certificate.deleteMany({});
     await Notice.deleteMany({});
     await ITR.deleteMany({});
     console.log('✓ All collections cleared\n');
@@ -186,99 +193,275 @@ const seedDB = async () => {
     }
     console.log(`✓ ${students.length} students created\n`);
 
-    // ── 5. Create Groups & Assign Members ──
+    // ── 5. Create Groups (from Project Group CSV — exact mappings) ──
     const groups = [];
     for (const gc of groupsConfig) {
-      const memberIds = gc.members.map(idx => students[idx]._id);
+      // Map roll numbers to student indices
+      const memberIds = gc.rollNos.map(roll => {
+        const idx = rollToIndex[roll];
+        if (idx === undefined) {
+          console.warn(`  ⚠ Roll ${roll} not found in students list!`);
+          return null;
+        }
+        return students[idx]._id;
+      }).filter(Boolean);
+
       const mentor = mentors.find(m => m.name === gc.guideName);
 
       const group = await StudentGroup.create({
         name: gc.name,
+        projectTitle: gc.projectTitle,
         projectGuide: gc.guideName,
         mentorId: mentor ? mentor._id : undefined,
         members: memberIds,
         academicYear: '2025-26',
         department: 'CO',
+        overallProgress: Math.floor(Math.random() * 80) + 10,
       });
 
-      // Update each member's groupId
+      // Update each student's groupId
       await User.updateMany(
         { _id: { $in: memberIds } },
         { groupId: group._id }
       );
 
       groups.push(group);
-      console.log(`✓ Group ${gc.name}: ${gc.members.length} members, guide: ${gc.guideName}`);
+      console.log(`✓ ${gc.name}: "${gc.projectTitle}" (${gc.guideName}) — ${memberIds.length} members [rolls: ${gc.rollNos.join(', ')}]`);
     }
     console.log(`\n✓ ${groups.length} groups created\n`);
 
-    // ── 6. Create Sample Abstracts ──
-    const abstract1 = await Abstract.create({
-      title: 'Smart Campus Navigation System',
-      description: 'A mobile-friendly web app that helps students navigate across the Sandip Polytechnic campus using indoor maps and GPS.',
-      groupId: groups[0]._id,
-      submittedBy: students[0]._id,
-      status: 'pending',
-    });
+    // ── 6. Create Abstracts (one per group, mixed statuses) ──
+    const abstractStatuses = ['pending', 'approved', 'rejected'];
+    const abstractsCreated = [];
+    for (let i = 0; i < groups.length; i++) {
+      const status = abstractStatuses[i % 3];
+      const gc = groupsConfig[i];
+      const firstMemberIdx = rollToIndex[gc.rollNos[0]];
+      const submitter = students[firstMemberIdx];
+      const reviewer = mentors.find(m => m.name === gc.guideName);
 
-    const abstract2 = await Abstract.create({
-      title: 'Online Lab Booking System',
-      description: 'A web portal to allow students to book computer lab time slots, reducing conflicts and improving resource utilization.',
-      groupId: groups[1]._id,
-      submittedBy: students[4]._id,
-      status: 'approved',
-      feedback: 'Good concept. Please proceed with implementation.',
-      reviewedBy: mentors[1]._id,
-      reviewedAt: new Date(),
-    });
+      const abstractData = {
+        title: gc.projectTitle,
+        description: `This project "${gc.projectTitle}" aims to solve real-world problems using modern web technologies. The team plans to use React, Node.js, and MongoDB for implementation. The abstract covers the problem statement, proposed solution, timeline, and expected outcomes.`,
+        groupId: groups[i]._id,
+        submittedBy: submitter._id,
+        status,
+      };
 
-    console.log(`✓ 2 sample abstracts created\n`);
+      if (status === 'approved') {
+        abstractData.feedback = 'Well-written abstract. Good problem definition and clear objectives. Approved for development.';
+        abstractData.reviewedBy = reviewer?._id;
+        abstractData.reviewedAt = new Date('2026-02-20');
+      } else if (status === 'rejected') {
+        abstractData.feedback = 'Abstract needs more details on the technical approach and feasibility. Please revise and resubmit.';
+        abstractData.reviewedBy = reviewer?._id;
+        abstractData.reviewedAt = new Date('2026-02-22');
+      }
 
-    // ── 7. Create Sample Notices ──
-    await Notice.create({
-      title: 'Project Abstract Submission Deadline',
-      purpose: 'All groups must submit their project abstracts by 15th March 2026. Late submissions will not be accepted.',
-      startDate: new Date('2026-03-01'),
-      dueDate: new Date('2026-03-15'),
-      type: 'manual',
-      createdBy: admin._id,
-      sentToStudents: true,
-    });
+      const abstract = await Abstract.create(abstractData);
+      abstractsCreated.push(abstract);
+    }
+    console.log(`✓ ${abstractsCreated.length} abstracts created (mixed statuses)\n`);
 
-    await Notice.create({
-      title: 'Weekly Progress Report Format',
-      purpose: 'Students are required to follow the standard format for weekly diary submissions. Refer to the attached guidelines.',
-      type: 'manual',
-      createdBy: admin._id,
-      sentToStudents: true,
-      sentToGuides: true,
-    });
+    // ── 7. Create Documents (various types across groups) ──
+    const docTypes = ['synopsis', 'ppt_stage_one', 'ppt_final', 'weekly_diary', 'black_book', 'first_project_report', 'final_report', 'sponsorship_letter'];
+    const docStatuses = ['pending', 'approved', 'needs_correction', 'verified'];
+    let docsCreated = 0;
 
-    console.log(`✓ 2 sample notices created\n`);
+    for (let i = 0; i < groups.length; i++) {
+      const gc = groupsConfig[i];
+      const firstMemberIdx = rollToIndex[gc.rollNos[0]];
+      const uploader = students[firstMemberIdx];
+      const reviewer = mentors.find(m => m.name === gc.guideName);
 
-    // ── 8. Create Sample ITR Records ──
-    await ITR.create({
-      studentId: students[0]._id,
-      companyName: 'TechSoft Solutions Pvt. Ltd.',
-      startDate: new Date('2025-06-01'),
-      endDate: new Date('2025-07-31'),
-      status: 'completed',
-      coordinatorId: itrCoord._id,
-      dailyDetails: [
-        { date: new Date('2025-06-01'), description: 'Orientation and setup of development environment', hours: 6 },
-        { date: new Date('2025-06-02'), description: 'Introduction to company tech stack and codebase', hours: 7 },
-      ],
-    });
+      // Each group gets 2-3 documents
+      const numDocs = 2 + (i % 2);
+      for (let d = 0; d < numDocs; d++) {
+        const docType = docTypes[(i + d) % docTypes.length];
+        const status = docStatuses[(i + d) % docStatuses.length];
+        const docData = {
+          type: docType,
+          fileName: `${gc.name}_${docType}_v${d + 1}.pdf`,
+          fileUrl: `/uploads/${gc.name}_${docType}_v${d + 1}.pdf`,
+          uploadedBy: uploader._id,
+          groupId: groups[i]._id,
+          stage: d < 2 ? 1 : 2,
+          status,
+        };
 
-    await ITR.create({
-      studentId: students[4]._id,
-      companyName: 'DigiWeb Services',
-      startDate: new Date('2025-07-01'),
-      status: 'ongoing',
-      coordinatorId: itrCoord._id,
-    });
+        if (status === 'approved' || status === 'verified') {
+          docData.feedback = 'Document reviewed and accepted. Good work.';
+          docData.reviewedBy = reviewer?._id;
+          docData.reviewedAt = new Date('2026-02-25');
+        } else if (status === 'needs_correction') {
+          docData.feedback = 'Formatting issues found. Please fix the header layout and re-upload.';
+          docData.reviewedBy = reviewer?._id;
+          docData.reviewedAt = new Date('2026-02-24');
+        }
 
-    console.log(`✓ 2 sample ITR records created\n`);
+        await Document.create(docData);
+        docsCreated++;
+      }
+    }
+    console.log(`✓ ${docsCreated} documents created\n`);
+
+    // ── 8. Create Certificates (various types, some verified) ──
+    const certTypes = ['itr_certificate', 'published_paper', 'project_competition', 'udemy_course'];
+    let certsCreated = 0;
+
+    for (let i = 0; i < 24; i++) {
+      const studentIdx = i % students.length;
+      const certType = certTypes[i % certTypes.length];
+      const verified = i % 3 === 0;
+      const reviewer = mentors[i % mentors.length];
+
+      const certData = {
+        type: certType,
+        fileName: `${students[studentIdx].name.split(' ')[0]}_${certType}.pdf`,
+        fileUrl: `/uploads/certs/${students[studentIdx].name.split(' ')[0]}_${certType}.pdf`,
+        uploadedBy: students[studentIdx]._id,
+        verified,
+      };
+
+      if (verified) {
+        certData.verifiedBy = reviewer._id;
+      }
+
+      await Certificate.create(certData);
+      certsCreated++;
+    }
+    console.log(`✓ ${certsCreated} certificates created\n`);
+
+    // ── 9. Create Notices ──
+    const noticesData = [
+      {
+        title: 'Project Abstract Submission Deadline',
+        purpose: 'All groups must submit their project abstracts by 15th March 2026. Late submissions will not be accepted. Ensure your abstract includes problem statement, objectives, and methodology.',
+        startDate: new Date('2026-03-01'),
+        dueDate: new Date('2026-03-15'),
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+        sentToGuides: true,
+      },
+      {
+        title: 'Weekly Diary Submission Format',
+        purpose: 'Students must follow the standard format for weekly diary submissions. Include date, work done, hours spent, and mentor remarks. Templates are available in Sample Documents section.',
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+      },
+      {
+        title: 'Seminar Stage 1 Schedule',
+        purpose: 'Seminar Stage 1 presentations are scheduled from 20th March to 25th March 2026. Each group gets 15 minutes for presentation and 5 minutes for Q&A.',
+        startDate: new Date('2026-03-20'),
+        dueDate: new Date('2026-03-25'),
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+        sentToGuides: true,
+      },
+      {
+        title: 'ITR Report Submission Guidelines',
+        purpose: 'All ITR students must submit their training reports by end of semester. Include daily logs, company certificate, and mentor feedback.',
+        startDate: new Date('2026-04-01'),
+        dueDate: new Date('2026-04-30'),
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+      },
+      {
+        title: 'Certificate Upload Deadline',
+        purpose: 'Students who have completed online courses, published papers, or participated in project competitions must upload certificates for verification.',
+        dueDate: new Date('2026-04-15'),
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+      },
+      {
+        title: 'Black Book Formatting Guide',
+        purpose: 'All groups must follow the standard formatting guide for the Black Book. Use A4 size, Times New Roman 12pt, 1.5 line spacing.',
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+        sentToGuides: true,
+      },
+      {
+        title: 'Final Project Report Deadline',
+        purpose: 'Final project reports must be submitted by 30th April 2026. Late submissions will result in grade deduction.',
+        dueDate: new Date('2026-04-30'),
+        type: 'manual',
+        createdBy: admin._id,
+        sentToStudents: true,
+        sentToGuides: true,
+      },
+    ];
+
+    for (const notice of noticesData) {
+      await Notice.create(notice);
+    }
+    console.log(`✓ ${noticesData.length} notices created\n`);
+
+    // ── 10. Create ITR Records (from ITR_students_list.doc — real placements) ──
+    // Each company with its CO students by roll number and ITR faculty mentor
+    const itrPlacements = [
+      {
+        company: 'Ideal Tech Infotech, Nashik',
+        mentorName: 'Mr. Y.N. Jadhav',
+        rollNos: ['4','5','6','7','8','9','13','14','18','19','24','25','27','28','29','30','31','32','33','35','36','38','39','40','44','45','46','47','50','51','62','65','68'],
+      },
+      {
+        company: 'Softcrowd Technologies, Nashik',
+        mentorName: 'Mrs. P.B. Datir',
+        rollNos: ['1','2','10','22','23','37','55','59','60','61','64','66','67'],
+      },
+      {
+        company: 'Calibers Infotech, Nashik',
+        mentorName: 'Mrs. R.V. Deshpande',
+        rollNos: ['12','15','16','20','21','26','34','41','42','43','48','49','53','54','56','58'],
+      },
+      {
+        company: 'Codedrift Academy, Nashik',
+        mentorName: 'Mrs. R.K. Ghate',
+        rollNos: ['3','11','17','52','57','63'],
+      },
+    ];
+
+    let itrCreated = 0;
+
+    for (const placement of itrPlacements) {
+      for (const roll of placement.rollNos) {
+        const idx = rollToIndex[roll];
+        if (idx === undefined) continue;
+
+        const itrData = {
+          studentId: students[idx]._id,
+          companyName: placement.company,
+          startDate: new Date('2025-05-05'),
+          status: 'ongoing',
+          coordinatorId: itrCoord._id,
+          dailyDetails: [],
+        };
+
+        // Add a few sample daily entries
+        const descriptions = [
+          'Orientation and introduction to company environment',
+          'Setup of development tools and project briefing',
+          'Started working on assigned tasks and modules',
+        ];
+        for (let d = 0; d < 3; d++) {
+          itrData.dailyDetails.push({
+            date: new Date(`2025-05-${String(5 + d).padStart(2, '0')}`),
+            description: descriptions[d],
+            hours: 7,
+          });
+        }
+
+        await ITR.create(itrData);
+        itrCreated++;
+      }
+    }
+    console.log(`✓ ${itrCreated} ITR records created\n`);
 
     // ── Summary ──
     console.log('═══════════════════════════════════════════');
@@ -289,9 +472,11 @@ const seedDB = async () => {
     console.log(`  Mentors:         ${mentors.length}  (password: mentor123)`);
     console.log(`  Students:        ${students.length} (password: student123)`);
     console.log(`  Groups:          ${groups.length}`);
-    console.log(`  Abstracts:       2`);
-    console.log(`  Notices:         2`);
-    console.log(`  ITR Records:     2`);
+    console.log(`  Abstracts:       ${abstractsCreated.length}`);
+    console.log(`  Documents:       ${docsCreated}`);
+    console.log(`  Certificates:    ${certsCreated}`);
+    console.log(`  Notices:         ${noticesData.length}`);
+    console.log(`  ITR Records:     ${itrCreated}`);
     console.log('═══════════════════════════════════════════\n');
 
     process.exit(0);

@@ -143,6 +143,29 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+
+const LearnPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with this email' });
+    }
+
+    // TODO: Implement email service for password reset
+    console.log(`Password reset requested for: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'Password reset link sent to email (placeholder)',
+    });
+  } catch (error) {
+    console.error('ForgotPassword error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,

@@ -5,31 +5,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { SAMPLE_DOCUMENT_TYPES } from '@/types';
-import { Download, Eye, FileDown, FileText } from 'lucide-react';
+import { Download, FileDown, FileText } from 'lucide-react';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+const BASE_URL = API_URL.replace('/api', '');
 
 interface SampleDocument {
   id: string;
   type: string;
   fileName: string;
+  fileUrl: string;
   uploadedAt: string;
   uploadedBy: string;
 }
 
-const mockSampleDocs: SampleDocument[] = [
-  { id: '1', type: 'Weekly Diary Format', fileName: 'Weekly_Diary_Format.pdf', uploadedAt: '2025-01-05', uploadedBy: 'Dr. Admin HOD' },
-  { id: '2', type: 'Synopsis', fileName: 'Synopsis_Template.docx', uploadedAt: '2025-01-06', uploadedBy: 'Dr. Admin HOD' },
-  { id: '3', type: 'PPT Stage One', fileName: 'PPT_Stage1_Template.pptx', uploadedAt: '2025-01-07', uploadedBy: 'Dr. Admin HOD' },
-  { id: '4', type: 'PPT Final', fileName: 'PPT_Final_Template.pptx', uploadedAt: '2025-01-08', uploadedBy: 'Dr. Admin HOD' },
-  { id: '5', type: 'Final Report', fileName: 'Final_Report_Format.pdf', uploadedAt: '2025-01-09', uploadedBy: 'Dr. Admin HOD' },
-  { id: '6', type: 'Black Book', fileName: 'Black_Book_Format.pdf', uploadedAt: '2025-01-10', uploadedBy: 'Dr. Admin HOD' },
-  { id: '7', type: 'Sponsorship Letter', fileName: 'Sponsorship_Letter_Template.docx', uploadedAt: '2025-01-11', uploadedBy: 'Dr. Admin HOD' },
-  { id: '8', type: 'Paper Publish', fileName: 'Paper_Publish_Format.pdf', uploadedAt: '2025-01-12', uploadedBy: 'Dr. Admin HOD' },
+// Real sample documents — files are served from the backend
+const sampleDocs: SampleDocument[] = [
+  { id: '1', type: 'PPT Stage One', fileName: 'Sample_ppt_template.pptx', fileUrl: '/uploads/samples/Sample_ppt_template.pptx', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
+  { id: '2', type: 'Sponsorship Letter', fileName: 'Sponsorship_letter.doc', fileUrl: '/uploads/samples/Sponsorship_letter.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
+  { id: '3', type: 'Project Competition Certificate', fileName: 'Project_cert.doc', fileUrl: '/uploads/samples/Project_cert.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
+  { id: '4', type: 'Weekly Diary Format', fileName: 'Prog_weekly_assesment.doc', fileUrl: '/uploads/samples/Prog_weekly_assesment.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
 ];
 
 export default function StudentSampleDocumentsPage() {
   const [selectedType, setSelectedType] = useState<string>('all');
-  const filteredDocs = selectedType === 'all' ? mockSampleDocs : mockSampleDocs.filter(d => d.type === selectedType);
+  const { toast } = useToast();
+  const filteredDocs = selectedType === 'all' ? sampleDocs : sampleDocs.filter(d => d.type === selectedType);
+
+  const handleDownload = (doc: SampleDocument) => {
+    const link = document.createElement('a');
+    link.href = `${BASE_URL}${doc.fileUrl}`;
+    link.download = doc.fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: 'Download Started', description: `Downloading ${doc.fileName}` });
+  };
 
   return (
     <DashboardLayout role="student">
@@ -87,14 +101,9 @@ export default function StudentSampleDocumentsPage() {
                       <TableCell>{doc.uploadedBy}</TableCell>
                       <TableCell>{doc.uploadedAt}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" className="text-info">
-                            <Eye className="h-4 w-4 mr-1" />View
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Download className="h-4 w-4 mr-1" />Download
-                          </Button>
-                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => handleDownload(doc)}>
+                          <Download className="h-4 w-4 mr-1" />Download
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

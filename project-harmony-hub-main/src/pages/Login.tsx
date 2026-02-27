@@ -131,14 +131,13 @@ export default function Login() {
                 />
               </div>
 
-              {/* Demo Credentials Info */}
+              {/* Login Credentials Info */}
               <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                <p className="font-medium text-muted-foreground mb-1">Demo Credentials:</p>
-                <p className="text-xs text-muted-foreground">Admin: admin@sandip.edu</p>
-                <p className="text-xs text-muted-foreground">Mentor: mentor@sandip.edu</p>
-                <p className="text-xs text-muted-foreground">Student: student@sandip.edu</p>
-                <p className="text-xs text-muted-foreground">ITR Coordinator: itr@sandip.edu</p>
-                <p className="text-xs text-muted-foreground mt-1">(Any password works)</p>
+                <p className="font-medium text-muted-foreground mb-1">Login Credentials:</p>
+                <p className="text-xs text-muted-foreground">Admin: admin@sandip.edu / admin123</p>
+                <p className="text-xs text-muted-foreground">Mentor: vb.ohol@sandip.edu / mentor123</p>
+                <p className="text-xs text-muted-foreground">Student: more.lalit.dilip@sandip.edu / student123</p>
+                <p className="text-xs text-muted-foreground">ITR: itr@sandip.edu / itr123</p>
               </div>
             </CardContent>
 

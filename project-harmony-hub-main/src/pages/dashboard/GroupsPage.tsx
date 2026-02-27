@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,75 +7,36 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { DEPARTMENTS, ACADEMIC_YEARS, StudentGroup } from '@/types';
-import { Eye, Users, Search, ArrowLeft, CheckCircle, Clock, AlertTriangle, FolderOpen, Award } from 'lucide-react';
+import { DEPARTMENTS, ACADEMIC_YEARS } from '@/types';
+import { Eye, Users, Search, ArrowLeft, CheckCircle, Clock, AlertTriangle, FolderOpen, Award, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { apiGet } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-interface GroupWithDetails extends StudentGroup {
+// Backend response types
+interface GroupMember {
+  _id: string;
+  name: string;
+  email: string;
+  enrollmentNumber: string;
+  rollNumber: string;
+  department: string;
+}
+
+interface GroupRecord {
+  _id: string;
+  name: string;
   projectTitle: string;
   projectGuide: string;
   overallProgress: number;
-  documentsSubmitted: string[];
-  documentsPending: string[];
-  certificatesSubmitted: string[];
-  certificatesNotSubmitted: string[];
+  academicYear: string;
+  department: string;
+  mentorId?: {
+    _id: string;
+    name: string;
+  };
+  members: GroupMember[];
 }
-
-const mockGroups: GroupWithDetails[] = [
-  { 
-    id: '1', name: 'G1', projectTitle: 'Smart Campus Management System', projectGuide: 'Prof. P. B. Datir',
-    overallProgress: 65,
-    documentsSubmitted: ['Synopsis', 'PPT Stage One', 'Black Book'],
-    documentsPending: ['Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'],
-    certificatesSubmitted: ['Paper Presentation Certificate 1', 'Paper Presentation Certificate 2'],
-    certificatesNotSubmitted: ['Paper Presentation Certificate 3', 'Project Competition Certificate'],
-    members: [
-      { id: '1', name: 'Purva Santosh Deshmane', email: 'purva@sandip.edu', enrollmentNumber: '23611780192', rollNumber: '01', department: 'CO' },
-      { id: '2', name: 'Arpita Sanjay Galankar', email: 'arpita@sandip.edu', enrollmentNumber: '23611780234', rollNumber: '02', department: 'CO' },
-    ],
-    academicYear: '2025-26', department: 'CO',
-  },
-  { 
-    id: '2', name: 'G2', projectTitle: 'AI-based Attendance System', projectGuide: 'Prof. S. K. Jadhav',
-    overallProgress: 40,
-    documentsSubmitted: ['Synopsis'],
-    documentsPending: ['PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'],
-    certificatesSubmitted: ['Paper Presentation Certificate 1'],
-    certificatesNotSubmitted: ['Paper Presentation Certificate 2', 'Paper Presentation Certificate 3', 'Project Competition Certificate'],
-    members: [
-      { id: '3', name: 'Sneha Patil', email: 'sneha@sandip.edu', enrollmentNumber: '23611780356', rollNumber: '03', department: 'CO' },
-      { id: '4', name: 'Rohan Gaikwad', email: 'rohan@sandip.edu', enrollmentNumber: '23611780478', rollNumber: '04', department: 'CO' },
-    ],
-    academicYear: '2025-26', department: 'CO',
-  },
-  { 
-    id: '3', name: 'G3', projectTitle: 'Predictive Analytics Dashboard', projectGuide: 'Prof. G. K. Ghate',
-    overallProgress: 30,
-    documentsSubmitted: ['Synopsis'],
-    documentsPending: ['PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'],
-    certificatesSubmitted: [],
-    certificatesNotSubmitted: ['Paper Presentation Certificate 1', 'Paper Presentation Certificate 2', 'Paper Presentation Certificate 3', 'Project Competition Certificate'],
-    members: [
-      { id: '5', name: 'Vikram Singh', email: 'vikram@sandip.edu', enrollmentNumber: '23611780590', rollNumber: '05', department: 'CO' },
-      { id: '6', name: 'Neha Sharma', email: 'neha@sandip.edu', enrollmentNumber: '23611780612', rollNumber: '06', department: 'CO' },
-      { id: '7', name: 'Akash Desai', email: 'akash@sandip.edu', enrollmentNumber: '23611780734', rollNumber: '07', department: 'CO' },
-    ],
-    academicYear: '2025-26', department: 'CO',
-  },
-  { 
-    id: '4', name: 'G4', projectTitle: 'Voice-Controlled Home Automation', projectGuide: 'Prof. V. B. Ohol',
-    overallProgress: 20,
-    documentsSubmitted: [],
-    documentsPending: ['Synopsis', 'PPT Stage One', 'Black Book', 'Final Report', 'PPT Final', 'Weekly Diary', 'Sponsorship Letter'],
-    certificatesSubmitted: [],
-    certificatesNotSubmitted: ['Paper Presentation Certificate 1', 'Paper Presentation Certificate 2', 'Paper Presentation Certificate 3', 'Project Competition Certificate'],
-    members: [
-      { id: '8', name: 'Sakshi More', email: 'sakshi@sandip.edu', enrollmentNumber: '23611780856', rollNumber: '08', department: 'CO' },
-      { id: '9', name: 'Mayur Gaikwad', email: 'mayur@sandip.edu', enrollmentNumber: '23611780978', rollNumber: '09', department: 'CO' },
-    ],
-    academicYear: '2025-26', department: 'CO',
-  },
-];
 
 interface GroupsPageProps {
   role: 'admin' | 'mentor';
@@ -86,11 +47,43 @@ export default function GroupsPage({ role }: GroupsPageProps) {
   const [department, setDepartment] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showGroups, setShowGroups] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<GroupWithDetails | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<GroupRecord | null>(null);
+  const { toast } = useToast();
 
-  const filteredGroups = mockGroups.filter(group =>
+  // Real data states
+  const [groups, setGroups] = useState<GroupRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch groups from backend
+  const fetchGroups = async () => {
+    setLoading(true);
+    try {
+      const data = await apiGet<{
+        success: boolean;
+        count: number;
+        data: GroupRecord[];
+      }>('/groups');
+
+      if (data.success) {
+        setGroups(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch groups:', error);
+      toast({ title: 'Error', description: 'Failed to load groups.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showGroups) {
+      fetchGroups();
+    }
+  }, [showGroups]);
+
+  const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    group.projectTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    group.projectTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleView = () => {
@@ -146,7 +139,7 @@ export default function GroupsPage({ role }: GroupsPageProps) {
                     </TableHeader>
                     <TableBody>
                       {selectedGroup.members.map((member) => (
-                        <TableRow key={member.id}>
+                        <TableRow key={member._id}>
                           <TableCell className="font-medium">{member.name}</TableCell>
                           <TableCell className="font-mono">{member.enrollmentNumber}</TableCell>
                           <TableCell>{member.rollNumber}</TableCell>
@@ -162,60 +155,33 @@ export default function GroupsPage({ role }: GroupsPageProps) {
               </CardContent>
             </Card>
 
-            {/* Documents Status */}
+            {/* Project Info Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2"><FolderOpen className="h-5 w-5" />Documents Status</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2"><FolderOpen className="h-5 w-5" />Project Information</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-success flex items-center gap-1 mb-2"><CheckCircle className="h-4 w-4" />Submitted Documents ({selectedGroup.documentsSubmitted.length})</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedGroup.documentsSubmitted.length > 0 ? selectedGroup.documentsSubmitted.map((doc, i) => (
-                        <Badge key={i} className="bg-success text-success-foreground">{doc}</Badge>
-                      )) : <span className="text-xs text-muted-foreground">None submitted yet</span>}
-                    </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium">Academic Year</p>
+                    <p className="text-sm text-muted-foreground">{selectedGroup.academicYear}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-warning flex items-center gap-1 mb-2"><Clock className="h-4 w-4" />Pending Documents ({selectedGroup.documentsPending.length})</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedGroup.documentsPending.map((doc, i) => (
-                        <Badge key={i} variant="outline" className="text-warning border-warning">{doc}</Badge>
-                      ))}
-                    </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium">Department</p>
+                    <p className="text-sm text-muted-foreground">{selectedGroup.department}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium">Guide / Mentor</p>
+                    <p className="text-sm text-muted-foreground">{selectedGroup.projectGuide}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm font-medium">Members</p>
+                    <p className="text-sm text-muted-foreground">{selectedGroup.members.length} students</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Certificates Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2"><Award className="h-5 w-5" />Certificates Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-success flex items-center gap-1 mb-2"><CheckCircle className="h-4 w-4" />Submitted Certificates ({selectedGroup.certificatesSubmitted.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedGroup.certificatesSubmitted.length > 0 ? selectedGroup.certificatesSubmitted.map((cert, i) => (
-                      <Badge key={i} className="bg-success text-success-foreground">{cert}</Badge>
-                    )) : <span className="text-xs text-muted-foreground">None submitted yet</span>}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-destructive flex items-center gap-1 mb-2"><AlertTriangle className="h-4 w-4" />Not Submitted ({selectedGroup.certificatesNotSubmitted.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedGroup.certificatesNotSubmitted.map((cert, i) => (
-                      <Badge key={i} variant="outline" className="text-destructive border-destructive">{cert}</Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </DashboardLayout>
     );
@@ -270,42 +236,49 @@ export default function GroupsPage({ role }: GroupsPageProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredGroups.map((group) => (
-                  <Card key={group.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedGroup(group)}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Users className="h-5 w-5 text-primary" />
-                          {group.name}
-                        </CardTitle>
-                        <Badge variant="secondary">{group.members.length} members</Badge>
-                      </div>
-                      <CardDescription className="text-sm">{group.projectTitle}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{group.overallProgress}%</span>
-                          </div>
-                          <Progress value={group.overallProgress} className="h-2" />
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Loading groups...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredGroups.map((group) => (
+                    <Card key={group._id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedGroup(group)}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Users className="h-5 w-5 text-primary" />
+                            {group.name}
+                          </CardTitle>
+                          <Badge variant="secondary">{group.members.length} members</Badge>
                         </div>
-                        <div className="space-y-1">
-                          {group.members.map((member) => (
-                            <div key={member.id} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
-                              <span>{member.name}</span>
-                              <span className="text-xs text-muted-foreground">Roll: {member.rollNumber}</span>
+                        <CardDescription className="text-sm">{group.projectTitle}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span className="font-medium">{group.overallProgress}%</span>
                             </div>
-                          ))}
+                            <Progress value={group.overallProgress} className="h-2" />
+                          </div>
+                          <div className="space-y-1">
+                            {group.members.map((member) => (
+                              <div key={member._id} className="flex items-center justify-between text-sm p-2 rounded bg-muted/50">
+                                <span>{member.name}</span>
+                                <span className="text-xs text-muted-foreground">Roll: {member.rollNumber}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Guide: {group.projectGuide}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">Guide: {group.projectGuide}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
