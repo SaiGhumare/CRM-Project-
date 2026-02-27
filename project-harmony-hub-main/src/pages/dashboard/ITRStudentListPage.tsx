@@ -71,10 +71,8 @@ export default function ITRStudentListPage({ role }: ITRStudentListPageProps) {
   };
 
   useEffect(() => {
-    if (showStudents) {
-      fetchITRStudents();
-    }
-  }, [showStudents]);
+    // fetch triggered directly by handleView
+  }, []);
 
   const filteredStudents = students.filter(s =>
     s.student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -107,7 +105,7 @@ export default function ITRStudentListPage({ role }: ITRStudentListPageProps) {
                   <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label} ({d.value})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button className="btn-info" onClick={() => setShowStudents(true)}><Eye className="h-4 w-4 mr-2" />View Data</Button>
+              <Button className="btn-info" onClick={() => { setShowStudents(true); fetchITRStudents(); }}><Eye className="h-4 w-4 mr-2" />View Data</Button>
             </div>
           </CardContent>
         </Card>

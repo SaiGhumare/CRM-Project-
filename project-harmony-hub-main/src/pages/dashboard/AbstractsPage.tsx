@@ -97,14 +97,13 @@ export default function AbstractsPage({ role }: AbstractsPageProps) {
   };
 
   useEffect(() => {
-    if (showAbstracts) {
-      fetchAbstracts();
-    }
-  }, [showAbstracts]);
+    // empty — fetch is triggered by handleView directly
+  }, []);
 
   const handleView = () => {
     if (academicYear && department) {
       setShowAbstracts(true);
+      fetchAbstracts();
     }
   };
 

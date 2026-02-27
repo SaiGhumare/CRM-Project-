@@ -81,14 +81,13 @@ export default function ProjectMentorsPage() {
   };
 
   useEffect(() => {
-    if (showMentors) {
-      fetchMentorsAndGroups();
-    }
-  }, [showMentors]);
+    // fetch triggered directly by handleView
+  }, []);
 
   const handleView = () => {
     if (academicYear && department) {
       setShowMentors(true);
+      fetchMentorsAndGroups();
     }
   };
 

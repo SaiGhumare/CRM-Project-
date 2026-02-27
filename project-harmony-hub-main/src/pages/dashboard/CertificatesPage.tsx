@@ -70,10 +70,8 @@ export default function CertificatesPage({ role }: CertificatesPageProps) {
   };
 
   useEffect(() => {
-    if (showCertificates) {
-      fetchCertificates();
-    }
-  }, [showCertificates]);
+    // fetch triggered directly by handleView
+  }, []);
 
   const getStatusBadge = (verified: boolean) => {
     if (verified) return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Verified</Badge>;
@@ -111,7 +109,7 @@ export default function CertificatesPage({ role }: CertificatesPageProps) {
                   <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label} ({d.value})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button className="btn-info" onClick={() => setShowCertificates(true)}><Eye className="h-4 w-4 mr-2" />View</Button>
+              <Button className="btn-info" onClick={() => { setShowCertificates(true); fetchCertificates(); }}><Eye className="h-4 w-4 mr-2" />View</Button>
             </div>
           </CardContent>
         </Card>

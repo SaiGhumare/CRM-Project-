@@ -78,11 +78,10 @@ export default function GroupsPage({ role }: GroupsPageProps) {
     }
   };
 
+  // Re-fetch only when search changes (if already showing)
   useEffect(() => {
-    if (showGroups) {
-      fetchGroups();
-    }
-  }, [showGroups]);
+    if (showGroups) fetchGroups();
+  }, [searchQuery]);
 
   const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,7 +89,10 @@ export default function GroupsPage({ role }: GroupsPageProps) {
   );
 
   const handleView = () => {
-    if (academicYear && department) setShowGroups(true);
+    if (academicYear && department) {
+      setShowGroups(true);
+      fetchGroups();
+    }
   };
 
   if (selectedGroup) {

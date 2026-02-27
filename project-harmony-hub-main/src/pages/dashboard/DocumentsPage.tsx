@@ -75,10 +75,8 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
   };
 
   useEffect(() => {
-    if (showDocuments) {
-      fetchDocuments();
-    }
-  }, [showDocuments]);
+    // fetch triggered directly by handleView
+  }, []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -130,7 +128,7 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
                   <SelectContent>{DEPARTMENTS.map(d => <SelectItem key={d.value} value={d.value}>{d.label} ({d.value})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button className="btn-info" onClick={() => setShowDocuments(true)}><Eye className="h-4 w-4 mr-2" />View</Button>
+              <Button className="btn-info" onClick={() => { setShowDocuments(true); fetchDocuments(); }}><Eye className="h-4 w-4 mr-2" />View</Button>
             </div>
           </CardContent>
         </Card>

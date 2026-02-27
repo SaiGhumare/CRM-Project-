@@ -79,14 +79,13 @@ export default function ITRPage({ role }: ITRPageProps) {
   };
 
   useEffect(() => {
-    if (showDocuments) {
-      fetchITR();
-    }
-  }, [showDocuments]);
+    // fetch triggered directly by handleView
+  }, []);
 
   const handleView = () => {
     if (academicYear && department) {
       setShowDocuments(true);
+      fetchITR();
     }
   };
 

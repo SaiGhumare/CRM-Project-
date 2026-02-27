@@ -82,15 +82,16 @@ export default function StudentsPage({ role }: StudentsPageProps) {
     }
   };
 
-  // Fetch when view is clicked or search changes
+  // Fetch when search changes (if data is already showing)
   useEffect(() => {
-    if (showStudents) {
-      fetchStudents();
-    }
-  }, [showStudents, searchQuery]);
+    if (showStudents) fetchStudents();
+  }, [searchQuery]);
 
   const handleView = () => {
-    if (academicYear && department) setShowStudents(true);
+    if (academicYear && department) {
+      setShowStudents(true);
+      fetchStudents();
+    }
   };
 
   // Group students by mentor for "Assigned to Mentor" tab
