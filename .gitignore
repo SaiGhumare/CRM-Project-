@@ -12,8 +12,7 @@ build/
 .env.local
 .env.production
 
-# Local uploads (not committed — use cloud storage in production)
-uploads/
+
 
 # Logs
 npm-debug.log*
