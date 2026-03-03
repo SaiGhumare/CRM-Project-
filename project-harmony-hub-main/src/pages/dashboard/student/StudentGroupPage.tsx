@@ -1,61 +1,92 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Users, Loader2 } from 'lucide-react';
+import { apiGet } from '@/lib/api';
 
-const groupMembers = [
-  { id: 1, name: 'Purva Santosh Deshmane', rollNumber: '01', enrollmentNumber: '23611780192', isLeader: true },
-  { id: 2, name: 'Arpita Sanjay Galankar', rollNumber: '02', enrollmentNumber: '23611780234' },
-  { id: 3, name: 'Rohit Vijay Patil', rollNumber: '03', enrollmentNumber: '23611780356' },
-];
+interface GroupMember {
+  _id: string;
+  name: string;
+  rollNumber?: string;
+  enrollmentNumber?: string;
+}
 
-const projectDetails = {
-  groupName: 'G1',
-  groupNumber: 'G1',
-  projectTitle: 'Smart Campus Management System',
-  mentor: 'Prof. P. B. Datir',
-  academicYear: '2025-26',
-  department: 'Computer Engineering (CO)',
-};
-
-const progressItems = [
-  { title: 'Abstract Submission', status: 'completed', progress: 100 },
-  { title: 'Abstract Approval', status: 'completed', progress: 100 },
-  { title: 'Synopsis', status: 'completed', progress: 100 },
-  { title: 'Stage 1 PPT', status: 'completed', progress: 100 },
-  { title: 'First Project Report', status: 'in_progress', progress: 60 },
-  { title: 'Weekly Diary', status: 'in_progress', progress: 40 },
-  { title: 'Stage 2 PPT', status: 'pending', progress: 0 },
-  { title: 'Final Report', status: 'pending', progress: 0 },
-  { title: 'Black Book', status: 'pending', progress: 0 },
-  { title: 'Sponsorship Letter', status: 'pending', progress: 0 },
-];
+interface GroupData {
+  _id: string;
+  name: string;
+  projectTitle?: string;
+  projectGuide?: string;
+  academicYear: string;
+  department: string;
+  overallProgress: number;
+  members: GroupMember[];
+  mentorId?: {
+    _id: string;
+    name: string;
+  };
+}
 
 export default function StudentGroupPage() {
-  const overallProgress = Math.round(progressItems.reduce((acc, item) => acc + item.progress, 0) / progressItems.length);
+  const { user } = useAuth();
+  const [groupData, setGroupData] = useState<GroupData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-success" />;
-      case 'in_progress':
-        return <Clock className="h-4 w-4 text-warning" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
+  useEffect(() => {
+    const fetchGroupData = async () => {
+      try {
+        if (user?.id) {
+          const data = await apiGet<{ success: boolean; group: GroupData }>(`/groups/student/${user.id}`);
+          if (data?.group) {
+            setGroupData(data.group);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch group data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-success text-success-foreground">Completed</Badge>;
-      case 'in_progress':
-        return <Badge className="bg-warning text-warning-foreground">In Progress</Badge>;
-      default:
-        return <Badge variant="secondary">Pending</Badge>;
-    }
-  };
+    fetchGroupData();
+  }, [user?.id]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout role="student">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Loading group data...</span>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!groupData) {
+    return (
+      <DashboardLayout role="student">
+        <div className="space-y-6 animate-fade-in">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">My Group</h1>
+            <p className="text-muted-foreground">View your group details and project progress</p>
+          </div>
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">You have not been assigned to a group yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Your HOD will assign you to a group soon.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const overallProgress = groupData.overallProgress || 0;
 
   return (
     <DashboardLayout role="student">
@@ -73,22 +104,22 @@ export default function StudentGroupPage() {
               <div>
                 <CardTitle className="text-xl flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  {projectDetails.groupName}
+                  {groupData.name}
                 </CardTitle>
-                <CardDescription>Group {projectDetails.groupNumber} | {projectDetails.academicYear}</CardDescription>
+                <CardDescription>Group {groupData.name} | {groupData.academicYear}</CardDescription>
               </div>
-              <Badge className="bg-primary text-primary-foreground">{projectDetails.department}</Badge>
+              <Badge className="bg-primary text-primary-foreground">{groupData.department}</Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <p className="text-sm text-muted-foreground">Project Title</p>
-                <p className="font-medium">{projectDetails.projectTitle}</p>
+                <p className="font-medium">{groupData.projectTitle || 'Not set'}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Project Mentor</p>
-                <p className="font-medium">{projectDetails.mentor}</p>
+                <p className="font-medium">{groupData.projectGuide || groupData.mentorId?.name || 'Not assigned'}</p>
               </div>
             </div>
 
@@ -96,23 +127,18 @@ export default function StudentGroupPage() {
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-3">MY GROUP</h3>
               <div className="space-y-3">
-                {groupMembers.map((member, index) => (
+                {groupData.members.map((member, index) => (
                   <div 
-                    key={member.id}
+                    key={member._id}
                     className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary font-semibold">
                       {index + 1}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{member.name}</p>
-                        {member.isLeader && (
-                          <Badge variant="outline" className="text-xs">Leader</Badge>
-                        )}
-                      </div>
+                      <p className="font-medium">{member.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Roll: {member.rollNumber} | Enrollment: {member.enrollmentNumber}
+                        Roll: {member.rollNumber || 'N/A'} | Enrollment: {member.enrollmentNumber || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -135,33 +161,6 @@ export default function StudentGroupPage() {
                 <span className="text-sm text-muted-foreground">Overall Completion</span>
               </div>
               <Progress value={overallProgress} className="h-4" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Detailed Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Submission Progress</CardTitle>
-            <CardDescription>Status of each project component</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {progressItems.map((item, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-                >
-                  {getStatusIcon(item.status)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium truncate">{item.title}</span>
-                      {getStatusBadge(item.status)}
-                    </div>
-                    <Progress value={item.progress} className="h-1.5" />
-                  </div>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>

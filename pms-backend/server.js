@@ -50,6 +50,7 @@ app.use('/api/certificates', require('./routes/certificates'));
 app.use('/api/notices', require('./routes/notices'));
 app.use('/api/itr', require('./routes/itr'));
 app.use('/api/mentors', require('./routes/mentors'));
+app.use('/api/sample-documents', require('./routes/sampleDocuments'));
 
 // Health check
 app.get('/api/health', (req, res) => {

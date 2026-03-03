@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,57 +14,20 @@ import { Megaphone, Upload, Send, Plus, Eye, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
+import { apiGet } from '@/lib/api';
 
 interface Notice {
-  id: string;
+  _id: string;
   title: string;
   purpose: string;
-  startDate: string;
-  dueDate: string;
+  startDate?: string;
+  dueDate?: string;
   type: 'manual' | 'file';
   fileName?: string;
   sentToStudents: boolean;
   sentToGuides: boolean;
   createdAt: string;
 }
-
-interface NoticeSelection {
-  sendToStudent: boolean;
-  sendToGuide: boolean;
-  selectedGroup: string;
-  selectedGuide: string;
-  selectedITRCoordinator: string;
-}
-
-const mockNotices: Notice[] = [
-  { id: '1', title: 'Submit Synopsis', purpose: 'All students must submit their Synopsis document by the due date.', startDate: '2025-01-10', dueDate: '2025-01-25', type: 'manual', sentToStudents: true, sentToGuides: false, createdAt: '2025-01-10' },
-  { id: '2', title: 'Project Guide Allocation', purpose: 'Students are requested to view their respective allocated project guide.', startDate: '2025-01-05', dueDate: '2025-01-15', type: 'manual', sentToStudents: true, sentToGuides: true, createdAt: '2025-01-05' },
-  { id: '3', title: 'Weekly Diary Submission Reminder', purpose: 'All students must submit weekly diary entries every Friday before 5 PM.', startDate: '2025-01-15', dueDate: '2025-03-30', type: 'file', fileName: 'weekly_diary_notice.pdf', sentToStudents: false, sentToGuides: false, createdAt: '2025-01-15' },
-];
-
-const projectGuides = [
-  { id: '1', name: 'P.B.Datir' },
-  { id: '2', name: 'G.K.Ghate' },
-  { id: '3', name: 'V.B.Ohol' },
-  { id: '4', name: 'Y.N.Jadhav' },
-  { id: '5', name: 'V.A.Wagh' },
-  { id: '6', name: 'R.V.Deshpande' },
-  { id: '7', name: 'R.S.Thete' },
-];
-
-const itrCoordinators = [
-  { id: '1', name: 'Y.N.Jadhav' },
-];
-
-const groups = ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10'];
-
-const createDefaultSelection = (): NoticeSelection => ({
-  sendToStudent: false,
-  sendToGuide: false,
-  selectedGroup: 'all',
-  selectedGuide: 'all',
-  selectedITRCoordinator: 'all',
-});
 
 interface NoticePageProps {
   role?: UserRole;
@@ -73,42 +36,29 @@ interface NoticePageProps {
 export default function NoticePage({ role = 'admin' }: NoticePageProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newNotice, setNewNotice] = useState({ title: '', purpose: '', startDate: '', dueDate: '' });
-  const [selections, setSelections] = useState<Record<string, NoticeSelection>>(() => {
-    const initial: Record<string, NoticeSelection> = {};
-    mockNotices.forEach(n => { initial[n.id] = createDefaultSelection(); });
-    return initial;
-  });
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
   // Upload tab selections
   const [uploadSendToStudent, setUploadSendToStudent] = useState(false);
   const [uploadSendToGuide, setUploadSendToGuide] = useState(false);
-  const [uploadSelectedGuide, setUploadSelectedGuide] = useState<string>('all');
-  const { toast } = useToast();
 
-  const getSelection = (noticeId: string): NoticeSelection => {
-    return selections[noticeId] || createDefaultSelection();
-  };
-
-  const updateSelection = (noticeId: string, updates: Partial<NoticeSelection>) => {
-    setSelections(prev => ({
-      ...prev,
-      [noticeId]: { ...getSelection(noticeId), ...updates },
-    }));
-  };
-
-  const handleSendNotice = (noticeId: string) => {
-    const sel = getSelection(noticeId);
-    const targets: string[] = [];
-    if (sel.sendToStudent) targets.push('Students');
-    if (sel.sendToGuide) {
-      const guideName = sel.selectedGuide === 'all' ? 'All Guides' : projectGuides.find(g => g.id === sel.selectedGuide)?.name;
-      targets.push(`Guide: ${guideName}`);
-    }
-    if (targets.length === 0) {
-      toast({ title: 'Error', description: 'Please select at least one recipient.', variant: 'destructive' });
-      return;
-    }
-    toast({ title: 'Notice Sent', description: `Sent to ${targets.join(', ')} successfully.` });
-  };
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const data = await apiGet<{ notices?: Notice[] }>('/notices');
+        if (data?.notices) {
+          setNotices(data.notices);
+        }
+      } catch (error) {
+        console.error('Failed to fetch notices:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchNotices();
+  }, []);
 
   const handleAddNotice = () => {
     setIsAddDialogOpen(false);
@@ -172,30 +122,35 @@ export default function NoticePage({ role = 'admin' }: NoticePageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2"><Megaphone className="h-5 w-5" />All Notices</CardTitle>
-                <CardDescription>{mockNotices.length} notices created</CardDescription>
+                <CardDescription>{notices.length} notices found</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead>Title</TableHead>
-                        <TableHead>Purpose</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockNotices.map((notice) => {
-                        const sel = getSelection(notice.id);
-                        return (
-                          <TableRow key={notice.id} className="hover:bg-muted/30">
+                {isLoading ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Loading notices...</p>
+                ) : notices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No notices created yet. Click "Create Notice" to add one.
+                  </p>
+                ) : (
+                  <div className="rounded-lg border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>Title</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {notices.map((notice) => (
+                          <TableRow key={notice._id} className="hover:bg-muted/30">
                             <TableCell className="font-medium">{notice.title}</TableCell>
                             <TableCell className="max-w-[250px] truncate">{notice.purpose}</TableCell>
-                            <TableCell>{notice.startDate}</TableCell>
-                            <TableCell>{notice.dueDate}</TableCell>
+                            <TableCell>{notice.startDate ? new Date(notice.startDate).toLocaleDateString() : '-'}</TableCell>
+                            <TableCell>{notice.dueDate ? new Date(notice.dueDate).toLocaleDateString() : '-'}</TableCell>
                             <TableCell>
                               <div className="flex flex-col gap-1">
                                 {notice.sentToStudents && <Badge className="bg-success text-success-foreground text-xs">Sent to Students</Badge>}
@@ -204,55 +159,17 @@ export default function NoticePage({ role = 'admin' }: NoticePageProps) {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex flex-col gap-2 items-end">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-1">
-                                    <Checkbox id={`student-${notice.id}`} checked={sel.sendToStudent} onCheckedChange={(c) => updateSelection(notice.id, { sendToStudent: !!c })} />
-                                    <label htmlFor={`student-${notice.id}`} className="text-xs">Student</label>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Checkbox id={`guide-${notice.id}`} checked={sel.sendToGuide} onCheckedChange={(c) => updateSelection(notice.id, { sendToGuide: !!c })} />
-                                    <label htmlFor={`guide-${notice.id}`} className="text-xs">Guide</label>
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap gap-1 items-center">
-                                  <Select value={sel.selectedGroup} onValueChange={(v) => updateSelection(notice.id, { selectedGroup: v })}>
-                                    <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder="Group" /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all">All Groups</SelectItem>
-                                      {groups.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                  <Select value={sel.selectedGuide} onValueChange={(v) => updateSelection(notice.id, { selectedGuide: v })}>
-                                    <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue placeholder="Guide" /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all">All Guides</SelectItem>
-                                      {projectGuides.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                  <Select value={sel.selectedITRCoordinator} onValueChange={(v) => updateSelection(notice.id, { selectedITRCoordinator: v })}>
-                                    <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue placeholder="ITR Coord." /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="all">All Coordinators</SelectItem>
-                                      {itrCoordinators.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex gap-1">
-                                  <Button size="sm" className="btn-success" onClick={() => handleSendNotice(notice.id)}>
-                                    <Send className="h-3 w-3 mr-1" />Send
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
-                                  <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                                </div>
+                              <div className="flex justify-end gap-1">
+                                <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -279,13 +196,6 @@ export default function NoticePage({ role = 'admin' }: NoticePageProps) {
                       <Checkbox id="upload-guide" checked={uploadSendToGuide} onCheckedChange={(c) => setUploadSendToGuide(!!c)} />
                       <label htmlFor="upload-guide" className="text-sm">Guide</label>
                     </div>
-                    <Select value={uploadSelectedGuide} onValueChange={setUploadSelectedGuide}>
-                      <SelectTrigger className="h-8 w-[160px] text-xs"><SelectValue placeholder="Select Guide" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Guides</SelectItem>
-                        {projectGuides.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="flex gap-2">
                     <Button className="btn-success"><Send className="h-4 w-4 mr-2" />Send Notice</Button>

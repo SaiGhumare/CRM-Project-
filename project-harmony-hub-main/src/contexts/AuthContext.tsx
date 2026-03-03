@@ -7,19 +7,30 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<boolean>;
-  signup: (data: SignupData) => Promise<boolean>;
+  registerHOD: (data: HODRegisterData) => Promise<{ success: boolean; message?: string }>;
+  createUser: (data: CreateUserData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
 }
 
-interface SignupData {
+interface HODRegisterData {
   name: string;
   email: string;
   password: string;
+  secretCode: string;
+}
+
+interface CreateUserData {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
   enrollmentNumber?: string;
   rollNumber?: string;
   department?: string;
-  role?: UserRole;
+  division?: string;
+  className?: string;
+  academicYear?: string;
 }
 
 // Backend response types
@@ -36,6 +47,17 @@ interface AuthResponse {
     rollNumber?: string;
     division?: string;
     avatarUrl?: string;
+  };
+}
+
+interface CreateUserResponse {
+  success: boolean;
+  message?: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
   };
 }
 
@@ -125,27 +147,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signup = useCallback(async (data: SignupData): Promise<boolean> => {
+  // HOD self-registration with secret code
+  const registerHOD = useCallback(async (data: HODRegisterData): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await apiPost<AuthResponse>('/auth/register', {
+      const response = await apiPost<AuthResponse>('/auth/register-hod', {
         name: data.name,
         email: data.email,
         password: data.password,
-        role: data.role || 'student',
-        enrollmentNumber: data.enrollmentNumber,
-        rollNumber: data.rollNumber,
-        department: data.department,
+        secretCode: data.secretCode,
       });
 
       if (response.success && response.token) {
         setToken(response.token);
         setUser(mapUser(response.user));
-        return true;
+        return { success: true };
       }
-      return false;
-    } catch (error) {
-      console.error('Signup error:', error);
-      return false;
+      return { success: false, message: 'Registration failed' };
+    } catch (error: unknown) {
+      console.error('RegisterHOD error:', error);
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message: string }).message
+          : 'Registration failed';
+      return { success: false, message };
+    }
+  }, []);
+
+  // HOD creates a user for another role (stays logged in as HOD)
+  const createUser = useCallback(async (data: CreateUserData): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await apiPost<CreateUserResponse>('/auth/create-user', data);
+
+      if (response.success) {
+        return { success: true, message: response.message };
+      }
+      return { success: false, message: response.message || 'Failed to create user' };
+    } catch (error: unknown) {
+      console.error('CreateUser error:', error);
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? (error as { message: string }).message
+          : 'Failed to create user';
+      return { success: false, message };
     }
   }, []);
 
@@ -170,7 +213,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       isLoading,
       login,
-      signup,
+      registerHOD,
+      createUser,
       logout,
       resetPassword,
     }}>

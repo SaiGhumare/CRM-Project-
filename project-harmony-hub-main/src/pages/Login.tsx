@@ -158,9 +158,9 @@ export default function Login() {
               </Button>
               
               <p className="text-sm text-center text-muted-foreground">
-                New student?{' '}
-                <Link to="/signup" className="text-primary font-medium hover:underline">
-                  Create an account
+                Are you the HOD?{' '}
+                <Link to="/hod-register" className="text-primary font-medium hover:underline">
+                  Register here
                 </Link>
               </p>
             </CardFooter>

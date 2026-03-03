@@ -20,12 +20,7 @@ interface ITRDocument {
   uploadedAt: string;
 }
 
-const mockITRDocs: ITRDocument[] = [
-  { id: '1', enrollmentNumber: '23611780192', name: 'Purva Santosh Deshmane', groupNumber: 'G1', documentType: 'offer_letter', fileName: 'offer_letter_purva.pdf', status: 'verified', uploadedAt: '2025-01-10' },
-  { id: '2', enrollmentNumber: '23611780192', name: 'Purva Santosh Deshmane', groupNumber: 'G1', documentType: 'itr_report', fileName: 'itr_report_purva.pdf', status: 'pending', uploadedAt: '2025-01-15' },
-  { id: '3', enrollmentNumber: '23611780234', name: 'Arpita Sanjay Galankar', groupNumber: 'G1', documentType: 'offer_letter', fileName: 'offer_letter_arpita.pdf', status: 'pending', uploadedAt: '2025-01-12' },
-  { id: '4', enrollmentNumber: '23611780356', name: 'Sneha Patil', groupNumber: 'G2', documentType: 'offer_letter', fileName: 'offer_letter_sneha.pdf', status: 'not_submitted', uploadedAt: '' },
-];
+
 
 interface ITRDocumentsPageProps {
   role: 'admin' | 'mentor';
@@ -84,40 +79,9 @@ export default function ITRDocumentsPage({ role }: ITRDocumentsPageProps) {
               <CardTitle className="text-lg flex items-center gap-2"><FolderOpen className="h-5 w-5" />ITR Documents</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Enrollment No.</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Group</TableHead>
-                      <TableHead>Document Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockITRDocs.map(doc => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-mono">{doc.enrollmentNumber}</TableCell>
-                        <TableCell className="font-medium">{doc.name}</TableCell>
-                        <TableCell>{doc.groupNumber}</TableCell>
-                        <TableCell>{doc.documentType === 'offer_letter' ? 'Offer Letter' : 'ITR Report'}</TableCell>
-                        <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
-                            {doc.status === 'pending' && (
-                              <Button size="sm" className="btn-success">Verify</Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No ITR documents found for the selected filters.
+              </p>
             </CardContent>
           </Card>
         )}

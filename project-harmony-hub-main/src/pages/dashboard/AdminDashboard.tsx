@@ -17,22 +17,7 @@ import {
   Eye,
 } from 'lucide-react';
 
-const stats = [
-  { title: 'Total Students', value: '156', icon: Users, color: 'text-info' },
-  { title: 'Total Groups', value: '42', icon: Users, color: 'text-primary' },
-  { title: 'Pending Abstracts', value: '12', icon: FileText, color: 'text-warning' },
-  { title: 'Documents Submitted', value: '89', icon: FolderOpen, color: 'text-success' },
-  { title: 'Certificates', value: '34', icon: Award, color: 'text-primary' },
-  { title: 'Approved', value: '67', icon: CheckCircle, color: 'text-success' },
-];
 
-const recentActivities = [
-  { type: 'abstract', message: 'G1 - Purva Santosh Deshmane submitted abstract (95% completion)', time: '2 hours ago', status: 'pending' },
-  { type: 'document', message: 'G1 - Purva Santosh Deshmane uploaded Synopsis', time: '3 hours ago', status: 'pending' },
-  { type: 'approval', message: 'Abstract approved for G2 - Arpita Sanjay Galankar (5% completion)', time: '5 hours ago', status: 'approved' },
-  { type: 'document', message: 'G1 - Purva Santosh Deshmane uploaded Project Report', time: '1 day ago', status: 'pending' },
-  { type: 'rejection', message: 'Abstract rejected for G3 - Sneha Patil', time: '1 day ago', status: 'rejected' },
-];
 
 export default function AdminDashboard() {
   const [academicYear, setAcademicYear] = useState('');
@@ -99,23 +84,13 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.title}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`h-12 w-12 rounded-lg bg-muted flex items-center justify-center ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Select an academic year and department above, then click "View Data" to see statistics.
+            </p>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -126,21 +101,9 @@ export default function AdminDashboard() {
             <CardDescription>Latest submissions and approvals</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  {getStatusIcon(activity.status)}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.message}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                  <Button variant="ghost" size="sm">View</Button>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No recent activity to show.
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import HODRegister from "./pages/HODRegister";
+import CreateUserPage from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import MentorDashboard from "./pages/dashboard/MentorDashboard";
@@ -47,7 +48,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/hod-register" element={<HODRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             
             {/* Admin Routes */}
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/dashboard/admin/project-mentors" element={<ProjectMentorsPage />} />
             <Route path="/dashboard/admin/groups" element={<GroupsPage role="admin" />} />
             <Route path="/dashboard/admin/abstracts" element={<AbstractsPage role="admin" />} />
+            <Route path="/dashboard/admin/create-user" element={<CreateUserPage />} />
             <Route path="/dashboard/admin/sample-documents" element={<SampleDocumentsPage />} />
             <Route path="/dashboard/admin/documents" element={<DocumentsPage role="admin" />} />
             <Route path="/dashboard/admin/certificates" element={<CertificatesPage role="admin" />} />

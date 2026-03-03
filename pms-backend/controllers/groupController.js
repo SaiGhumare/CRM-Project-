@@ -66,6 +66,32 @@ const getAllGroups = async (req, res) => {
   }
 };
 
+// @desc    Get student's group
+// @route   GET /api/groups/student/:userId
+// @access  Private
+const getStudentGroup = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    
+    if (!user || !user.groupId) {
+      return res.status(404).json({ message: 'Student is not assigned to any group' });
+    }
+
+    const group = await StudentGroup.findById(user.groupId)
+      .populate('members', '-password')
+      .populate('mentorId', '-password');
+
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    res.json({ success: true, group });
+  } catch (error) {
+    console.error('getStudentGroup error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Get group by ID
 // @route   GET /api/groups/:id
 // @access  Private
@@ -207,6 +233,7 @@ module.exports = {
   createGroup,
   getAllGroups,
   getGroupById,
+  getStudentGroup,
   updateGroup,
   deleteGroup,
   addMember,

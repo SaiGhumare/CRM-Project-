@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { SAMPLE_DOCUMENT_TYPES } from '@/types';
-import { Upload, Download, FileDown, FileText, Trash2 } from 'lucide-react';
+import { Upload, Download, FileDown, FileText, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
@@ -23,20 +23,46 @@ interface SampleDocument {
   uploadedBy: string;
 }
 
-// Real sample documents — files are served from the backend
-const sampleDocs: SampleDocument[] = [
-  { id: '1', type: 'PPT Stage One', fileName: 'Sample_ppt_template.pptx', fileUrl: '/uploads/samples/Sample_ppt_template.pptx', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
-  { id: '2', type: 'Sponsorship Letter', fileName: 'Sponsorship_letter.doc', fileUrl: '/uploads/samples/Sponsorship_letter.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
-  { id: '3', type: 'Project Competition Certificate', fileName: 'Project_cert.doc', fileUrl: '/uploads/samples/Project_cert.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
-  { id: '4', type: 'Weekly Diary Format', fileName: 'Prog_weekly_assesment.doc', fileUrl: '/uploads/samples/Prog_weekly_assesment.doc', uploadedAt: '2026-02-27', uploadedBy: 'Admin' },
-];
-
 export default function SampleDocumentsPage() {
+  const [documents, setDocuments] = useState<SampleDocument[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadType, setUploadType] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const filteredDocs = selectedType === 'all' ? sampleDocs : sampleDocs.filter(d => d.type === selectedType);
+  const getAuthHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  });
 
+  // Fetch documents from the backend
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/sample-documents`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDocuments(data.data);
+      } else {
+        toast({ title: 'Error', description: data.message || 'Failed to load documents', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: 'Could not connect to server', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const filteredDocs = selectedType === 'all' ? documents : documents.filter(d => d.type === selectedType);
+
+  // Download a document
   const handleDownload = (doc: SampleDocument) => {
     const link = document.createElement('a');
     link.href = `${BASE_URL}${doc.fileUrl}`;
@@ -46,6 +72,66 @@ export default function SampleDocumentsPage() {
     link.click();
     document.body.removeChild(link);
     toast({ title: 'Download Started', description: `Downloading ${doc.fileName}` });
+  };
+
+  // Delete a document
+  const handleDelete = async (doc: SampleDocument) => {
+    if (!window.confirm(`Are you sure you want to delete "${doc.fileName}"?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/sample-documents/${encodeURIComponent(doc.fileName)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDocuments(prev => prev.filter(d => d.id !== doc.id));
+        toast({ title: 'Document Deleted', description: `${doc.fileName} has been removed.` });
+      } else {
+        toast({ title: 'Error', description: data.message || 'Failed to delete', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Could not connect to server', variant: 'destructive' });
+    }
+  };
+
+  // Upload a new document
+  const handleUpload = async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) {
+      toast({ title: 'Missing File', description: 'Please select a file to upload', variant: 'destructive' });
+      return;
+    }
+    if (!uploadType) {
+      toast({ title: 'Missing Type', description: 'Please select a document type', variant: 'destructive' });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', uploadType);
+
+    try {
+      setUploading(true);
+      const res = await fetch(`${API_URL}/sample-documents`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDocuments(prev => [data.data, ...prev]);
+        toast({ title: 'Uploaded!', description: `${file.name} uploaded successfully.` });
+        // Reset form
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        setUploadType('');
+      } else {
+        toast({ title: 'Upload Failed', description: data.message || 'Something went wrong', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Could not connect to server', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -66,7 +152,7 @@ export default function SampleDocumentsPage() {
             <div className="flex flex-wrap gap-4 items-end">
               <div className="space-y-2 min-w-[250px]">
                 <Label>Document Type</Label>
-                <Select>
+                <Select value={uploadType} onValueChange={setUploadType}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select document type" />
                   </SelectTrigger>
@@ -79,11 +165,14 @@ export default function SampleDocumentsPage() {
               </div>
               <div className="space-y-2 min-w-[250px]">
                 <Label>File</Label>
-                <Input type="file" accept=".pdf,.doc,.docx,.pptx,.ppt" />
+                <Input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.pptx,.ppt" />
               </div>
-              <Button className="btn-success">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Template
+              <Button className="btn-success" onClick={handleUpload} disabled={uploading}>
+                {uploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Uploading…</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" />Upload Template</>
+                )}
               </Button>
             </div>
           </CardContent>
@@ -114,45 +203,64 @@ export default function SampleDocumentsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-lg border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead>Document Type</TableHead>
-                    <TableHead>File Name</TableHead>
-                    <TableHead>Uploaded By</TableHead>
-                    <TableHead>Uploaded Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDocs.map((doc) => (
-                    <TableRow key={doc.id} className="hover:bg-muted/30">
-                      <TableCell>
-                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                          <FileText className="h-3 w-3" />
-                          {doc.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{doc.fileName}</TableCell>
-                      <TableCell>{doc.uploadedBy}</TableCell>
-                      <TableCell>{doc.uploadedAt}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleDownload(doc)}>
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="rounded-lg border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead>Document Type</TableHead>
+                      <TableHead>File Name</TableHead>
+                      <TableHead>Uploaded By</TableHead>
+                      <TableHead>Uploaded Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredDocs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                          No sample documents found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredDocs.map((doc) => (
+                        <TableRow key={doc.id} className="hover:bg-muted/30">
+                          <TableCell>
+                            <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                              <FileText className="h-3 w-3" />
+                              {doc.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{doc.fileName}</TableCell>
+                          <TableCell>{doc.uploadedBy}</TableCell>
+                          <TableCell>{doc.uploadedAt}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleDownload(doc)}>
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => handleDelete(doc)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

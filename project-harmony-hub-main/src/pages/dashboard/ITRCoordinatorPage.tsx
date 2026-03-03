@@ -42,22 +42,7 @@ interface AttendanceRecord {
   status: 'present' | 'absent' | 'leave';
 }
 
-const mockCoordinators: ITRCoordinator[] = [
-  { id: '1', name: 'Prof. R. S. More', contactNumber: '9876543220', email: 'rsmore@sandip.edu', confirmationForm: 'confirmed' },
-  { id: '2', name: 'Prof. M. N. Kale', contactNumber: '9876543221', email: 'mnkale@sandip.edu', confirmationForm: 'confirmed' },
-];
 
-const mockAssignedStudents: AssignedStudent[] = [
-  { id: '1', enrollmentNumber: '23611780192', name: 'Purva Santosh Deshmane', technology: 'Node.js', coordinator: 'Prof. R. S. More', company: 'Tech Mahindra, Pune' },
-  { id: '2', enrollmentNumber: '23611780234', name: 'Arpita Sanjay Galankar', technology: 'React', coordinator: 'Prof. R. S. More', company: 'Persistent, Nashik' },
-  { id: '3', enrollmentNumber: '23611780356', name: 'Sneha Patil', technology: 'Python', coordinator: 'Prof. M. N. Kale', company: 'Infosys, Pune' },
-];
-
-const mockAttendance: AttendanceRecord[] = [
-  { id: '1', enrollmentNumber: '23611780192', name: 'Purva Santosh Deshmane', totalDays: 30, presentDays: 28, percentage: 93, date: '2025-01-20', status: 'present' },
-  { id: '2', enrollmentNumber: '23611780234', name: 'Arpita Sanjay Galankar', totalDays: 30, presentDays: 24, percentage: 80, date: '2025-01-20', status: 'present' },
-  { id: '3', enrollmentNumber: '23611780356', name: 'Sneha Patil', totalDays: 30, presentDays: 20, percentage: 67, date: '2025-01-20', status: 'absent' },
-];
 
 export default function ITRCoordinatorPage() {
   const [activeTab, setActiveTab] = useState('assign');
@@ -119,31 +104,9 @@ export default function ITRCoordinatorPage() {
                 <Card>
                   <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ClipboardCheck className="h-5 w-5" />Assigned ITR Coordinators</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="rounded-lg border overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/50">
-                            <TableHead>Name</TableHead><TableHead>Contact</TableHead><TableHead>Email</TableHead><TableHead>Confirmation</TableHead><TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {mockCoordinators.map(coord => (
-                            <TableRow key={coord.id}>
-                              <TableCell className="font-medium">{coord.name}</TableCell>
-                              <TableCell>{coord.contactNumber}</TableCell>
-                              <TableCell>{coord.email}</TableCell>
-                              <TableCell><Badge className="bg-success text-success-foreground">Confirmed</Badge></TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-1">
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-info"><Edit className="h-4 w-4" /></Button>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      No ITR coordinators assigned yet. Click "Add ITR Coordinator" to assign one.
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -170,26 +133,9 @@ export default function ITRCoordinatorPage() {
                 <CardTitle className="text-lg flex items-center gap-2"><Users className="h-5 w-5" />Students with Assigned Coordinators</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead>Enrollment No.</TableHead><TableHead>Name</TableHead><TableHead>Technology</TableHead><TableHead>Company</TableHead><TableHead>ITR Coordinator</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockAssignedStudents.map(s => (
-                        <TableRow key={s.id}>
-                          <TableCell className="font-mono">{s.enrollmentNumber}</TableCell>
-                          <TableCell className="font-medium">{s.name}</TableCell>
-                          <TableCell><Badge variant="secondary">{s.technology}</Badge></TableCell>
-                          <TableCell>{s.company}</TableCell>
-                          <TableCell>{s.coordinator}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No students assigned to coordinators yet.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
@@ -201,39 +147,9 @@ export default function ITRCoordinatorPage() {
                 <CardDescription>View attendance marked by ITR Coordinators. 75%+ required for certificate eligibility.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-lg border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead>Enrollment No.</TableHead><TableHead>Name</TableHead><TableHead>Total Days</TableHead><TableHead>Present</TableHead><TableHead>Attendance %</TableHead><TableHead>Eligible</TableHead><TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockAttendance.map(record => (
-                        <TableRow key={record.id}>
-                          <TableCell className="font-mono">{record.enrollmentNumber}</TableCell>
-                          <TableCell className="font-medium">{record.name}</TableCell>
-                          <TableCell>{record.totalDays}</TableCell>
-                          <TableCell>{record.presentDays}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2 min-w-[120px]">
-                              <Progress value={record.percentage} className="h-2 flex-1" />
-                              <span className={`text-sm font-medium ${record.percentage >= 75 ? 'text-success' : 'text-destructive'}`}>{record.percentage}%</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {record.percentage >= 75 ? <Badge className="bg-success text-success-foreground">Yes</Badge> : <Badge variant="destructive">No</Badge>}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={record.status === 'present' ? 'bg-success text-success-foreground' : 'bg-destructive text-destructive-foreground'}>
-                              {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No attendance records available yet.
+              </p>
               </CardContent>
             </Card>
           </TabsContent>

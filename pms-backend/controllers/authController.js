@@ -1,11 +1,89 @@
 const User = require('../models/User');
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
-const register = async (req, res) => {
+// @desc    Register a HOD account (requires secret code)
+// @route   POST /api/auth/register-hod
+// @access  Public (secret-code-gated)
+const registerHOD = async (req, res) => {
   try {
-    const { name, email, password, role, enrollmentNumber, rollNumber, department, division, className } = req.body;
+    const { name, email, password, secretCode } = req.body;
+
+    // Validate secret code
+    if (!secretCode || secretCode !== process.env.HOD_SECRET_CODE) {
+      return res.status(403).json({ message: 'Invalid secret code. HOD registration denied.' });
+    }
+
+    // Check if email already taken
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    // Create HOD user
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'admin',
+    });
+
+    // Generate token
+    const token = user.getSignedJwtToken();
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('RegisterHOD error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    HOD creates an account for another user (mentor, student, itr_coordinator)
+// @route   POST /api/auth/create-user
+// @access  Private (HOD/admin only)
+const createUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role,
+      enrollmentNumber,
+      rollNumber,
+      department,
+      division,
+      className,
+      academicYear,
+    } = req.body;
+
+    // HOD cannot create another admin account through this route
+    if (role === 'admin') {
+      return res.status(403).json({ message: 'Cannot create another HOD account via this route.' });
+    }
+
+    const allowedRoles = ['mentor', 'student', 'itr_coordinator'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: `Invalid role. Must be one of: ${allowedRoles.join(', ')}` });
+    }
+
+    // Validate enrollment number for students
+    if (role === 'student') {
+      if (!enrollmentNumber) {
+        return res.status(400).json({ message: 'Enrollment number is required for students' });
+      }
+      // Check if a student with this enrollment number already exists (ensure uniqueness)
+      const existingStudentByEnrollment = await User.findOne({ enrollmentNumber, role: 'student' });
+      if (existingStudentByEnrollment) {
+        return res.status(400).json({ message: 'A student account with this enrollment number already exists' });
+      }
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -24,14 +102,12 @@ const register = async (req, res) => {
       department,
       division,
       className,
+      academicYear,
     });
-
-    // Generate token
-    const token = user.getSignedJwtToken();
 
     res.status(201).json({
       success: true,
-      token,
+      message: `${role} account created successfully`,
       user: {
         id: user._id,
         name: user.name,
@@ -40,10 +116,11 @@ const register = async (req, res) => {
         department: user.department,
         enrollmentNumber: user.enrollmentNumber,
         rollNumber: user.rollNumber,
+        division: user.division,
       },
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('CreateUser error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -143,31 +220,9 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-
-const LearnPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'No user found with this email' });
-    }
-
-    // TODO: Implement email service for password reset
-    console.log(`Password reset requested for: ${email}`);
-
-    res.json({
-      success: true,
-      message: 'Password reset link sent to email (placeholder)',
-    });
-  } catch (error) {
-    console.error('ForgotPassword error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
 module.exports = {
-  register,
+  registerHOD,
+  createUser,
   login,
   getMe,
   forgotPassword,

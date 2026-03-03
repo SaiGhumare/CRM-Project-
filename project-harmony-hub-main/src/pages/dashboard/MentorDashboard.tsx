@@ -8,19 +8,7 @@ import { Input } from '@/components/ui/input';
 import { DEPARTMENTS, ACADEMIC_YEARS } from '@/types';
 import { Users, FileText, FolderOpen, Award, CheckCircle, Clock, AlertCircle, TrendingUp, Eye, Upload } from 'lucide-react';
 
-const stats = [
-  { title: 'My Students', value: '38', icon: Users, color: 'text-info' },
-  { title: 'My Groups', value: '12', icon: Users, color: 'text-primary' },
-  { title: 'Pending Reviews', value: '8', icon: FileText, color: 'text-warning' },
-  { title: 'Documents to Review', value: '15', icon: FolderOpen, color: 'text-success' },
-];
 
-const pendingTasks = [
-  { type: 'abstract', group: 'G1', title: 'Smart Campus Management', time: '2 hours ago' },
-  { type: 'abstract', group: 'G2', title: 'AI-based Attendance System', time: '5 hours ago' },
-  { type: 'document', group: 'G3', title: 'Synopsis Review', time: '1 day ago' },
-  { type: 'document', group: 'G4', title: 'Project Report Review', time: '1 day ago' },
-];
 
 export default function MentorDashboard() {
   const [academicYear, setAcademicYear] = useState('');
@@ -60,23 +48,13 @@ export default function MentorDashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.title}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`h-12 w-12 rounded-lg bg-muted flex items-center justify-center ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Select an academic year and department above, then click "View Data" to see your student statistics.
+            </p>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -84,21 +62,9 @@ export default function MentorDashboard() {
             <CardDescription>Items awaiting your review</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {pendingTasks.map((task, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                  {task.type === 'abstract' ? <FileText className="h-5 w-5 text-info" /> : <FolderOpen className="h-5 w-5 text-primary" />}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{task.title}</p>
-                    <p className="text-xs text-muted-foreground">Group: {task.group} • {task.time}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="btn-success">Approve</Button>
-                    <Button size="sm" variant="destructive">Reject</Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No pending reviews at the moment.
+            </p>
           </CardContent>
         </Card>
       </div>

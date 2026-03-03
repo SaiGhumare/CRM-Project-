@@ -18,7 +18,7 @@ import {
   LayoutDashboard, FileText, Upload, Users, Award, Bell, LogOut,
   GraduationCap, ClipboardList, FolderOpen, Briefcase, UserCheck,
   FileStack, ChevronDown, ChevronRight, Megaphone, FileDown,
-  ClipboardCheck, CalendarCheck, IndianRupee,
+  ClipboardCheck, CalendarCheck, IndianRupee, UserPlus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import sandipFoundationLogo from '@/assets/sandip-foundation-logo.jpeg';
@@ -52,6 +52,7 @@ const getNavEntries = (role: UserRole): NavEntry[] => {
   if (role === 'admin') {
     return [
       { title: 'Dashboard', href: '/dashboard/admin', icon: <LayoutDashboard className="h-5 w-5" /> },
+      { title: 'Create User', href: '/dashboard/admin/create-user', icon: <UserPlus className="h-5 w-5" /> },
       {
         title: 'Project Details',
         icon: <FolderOpen className="h-5 w-5" />,

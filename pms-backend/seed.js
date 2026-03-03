@@ -217,7 +217,7 @@ const seedDB = async () => {
         members: memberIds,
         academicYear: '2025-26',
         department: 'CO',
-        overallProgress: Math.floor(Math.random() * 80) + 10,
+        overallProgress: 0,
       });
 
       // Update each student's groupId
@@ -546,7 +546,7 @@ const seedDB = async () => {
         members: memberIds,
         academicYear: '2024-25',
         department: 'CO',
-        overallProgress: Math.floor(Math.random() * 50) + 50,
+        overallProgress: 0,
       });
 
       await User.updateMany({ _id: { $in: memberIds } }, { groupId: group._id });
