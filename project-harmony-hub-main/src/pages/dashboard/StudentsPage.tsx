@@ -8,10 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DEPARTMENTS, ACADEMIC_YEARS } from '@/types';
-import { Eye, Search, Download, Plus, Save, Loader2 } from 'lucide-react';
+import { Eye, Search, Download, Plus, Save, Loader2, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiDelete } from '@/lib/api';
 
 // Type for student data from the backend
 interface StudentRecord {
@@ -108,6 +108,18 @@ export default function StudentsPage({ role }: StudentsPageProps) {
     toast({ title: 'Student Added', description: 'Student has been added successfully.' });
   };
 
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${studentName}"? This action cannot be undone.`)) return;
+    try {
+      await apiDelete(`/students/${studentId}`);
+      toast({ title: 'Student Deleted', description: `${studentName} has been removed.` });
+      fetchStudents();
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+      toast({ title: 'Error', description: 'Failed to delete student.', variant: 'destructive' });
+    }
+  };
+
   const renderStudentTable = (studentList: StudentRecord[]) => (
     <div className="rounded-lg border overflow-hidden">
       <Table>
@@ -141,7 +153,14 @@ export default function StudentsPage({ role }: StudentsPageProps) {
                 <TableCell>{student.groupId?.projectGuide || '-'}</TableCell>
                 <TableCell className="text-muted-foreground">{student.email}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="text-info">View Details</Button>
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="sm" className="text-info">View Details</Button>
+                    {role === 'admin' && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteStudent(student._id, student.name)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))
