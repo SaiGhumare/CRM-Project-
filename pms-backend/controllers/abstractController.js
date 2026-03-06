@@ -98,6 +98,21 @@ const reviewAbstract = async (req, res) => {
     abstract.reviewedAt = Date.now();
     await abstract.save();
 
+    // If approved, bump group progress (only on the first approved abstract for this group)
+    if (status === 'approved') {
+      const alreadyApproved = await Abstract.countDocuments({
+        groupId: abstract.groupId,
+        status: 'approved',
+        _id: { $ne: abstract._id },
+      });
+      if (alreadyApproved === 0) {
+        // First abstract approval — increase progress by 20%
+        await StudentGroup.findByIdAndUpdate(abstract.groupId, {
+          $inc: { overallProgress: 20 },
+        });
+      }
+    }
+
     const updated = await Abstract.findById(abstract._id)
       .populate('groupId')
       .populate('submittedBy', '-password')

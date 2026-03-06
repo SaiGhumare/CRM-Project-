@@ -68,7 +68,13 @@ export default function GroupsPage({ role }: GroupsPageProps) {
       }>(`/groups?${params.toString()}`);
 
       if (data.success) {
-        setGroups(data.data);
+        // Sort numerically by group number (G1, G2, ... G10, G18)
+        const sorted = data.data.sort((a, b) => {
+          const numA = parseInt(a.name.replace(/\D/g, '')) || 0;
+          const numB = parseInt(b.name.replace(/\D/g, '')) || 0;
+          return numA - numB;
+        });
+        setGroups(sorted);
       }
     } catch (error) {
       console.error('Failed to fetch groups:', error);

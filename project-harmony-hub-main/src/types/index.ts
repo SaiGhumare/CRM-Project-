@@ -11,6 +11,7 @@ export interface User {
   rollNumber?: string;
   department?: Department;
   avatarUrl?: string;
+  groupId?: unknown;
 }
 
 // Departments

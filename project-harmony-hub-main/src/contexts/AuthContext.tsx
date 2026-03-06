@@ -47,6 +47,7 @@ interface AuthResponse {
     rollNumber?: string;
     division?: string;
     avatarUrl?: string;
+    groupId?: unknown;
   };
 }
 
@@ -90,6 +91,7 @@ function mapUser(backendUser: AuthResponse['user']): User {
     enrollmentNumber: backendUser.enrollmentNumber,
     rollNumber: backendUser.rollNumber,
     avatarUrl: backendUser.avatarUrl,
+    groupId: backendUser.groupId,
   };
 }
 
@@ -118,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             enrollmentNumber: data.user.enrollmentNumber,
             rollNumber: data.user.rollNumber,
             avatarUrl: data.user.avatarUrl,
+            groupId: data.user.groupId,
           });
         }
       } catch (error) {

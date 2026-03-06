@@ -60,7 +60,13 @@ export default function ITRStudentListPage({ role }: ITRStudentListPageProps) {
       }>(`/itr/students?${params.toString()}`);
 
       if (data.success) {
-        setStudents(data.data);
+        // Sort by roll number ascending
+        const sorted = data.data.sort((a, b) => {
+          const rollA = parseInt(a.student.rollNumber || '0') || 0;
+          const rollB = parseInt(b.student.rollNumber || '0') || 0;
+          return rollA - rollB;
+        });
+        setStudents(sorted);
       }
     } catch (error) {
       console.error('Failed to fetch ITR students:', error);

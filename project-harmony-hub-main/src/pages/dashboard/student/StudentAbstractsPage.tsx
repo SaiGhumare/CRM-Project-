@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,79 +6,167 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Eye, CheckCircle, XCircle, AlertCircle, Save } from 'lucide-react';
+import { FileText, Upload, Download, Eye, CheckCircle, XCircle, AlertCircle, Save, Loader2, Plus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiGet, apiPost, apiUpload } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
-interface Abstract {
-  id: number;
+interface AbstractRecord {
+  _id: string;
   title: string;
   description: string;
-  fileName?: string;
-  status: 'not_submitted' | 'pending' | 'approved' | 'correction_needed';
+  fileUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
   feedback?: string;
+  createdAt: string;
+  groupId?: {
+    _id: string;
+    name: string;
+    projectTitle: string;
+  };
+  submittedBy?: {
+    _id: string;
+    name: string;
+  };
+  reviewedBy?: {
+    _id: string;
+    name: string;
+  };
+  reviewedAt?: string;
 }
 
-const initialAbstracts: Abstract[] = [
-  { 
-    id: 1, 
-    title: 'Smart Campus Management System', 
-    description: 'A comprehensive system for managing campus activities including attendance, library, and events.',
-    fileName: 'Abstract_1_SmartCampus.pdf',
-    status: 'approved',
-    feedback: 'Well written abstract. Proceed with implementation.'
-  },
-  { 
-    id: 2, 
-    title: 'AI-Based Attendance System', 
-    description: 'Using facial recognition for automated attendance marking.',
-    fileName: 'Abstract_2_AIAttendance.pdf',
-    status: 'correction_needed',
-    feedback: 'Please add more technical details about the AI model to be used.'
-  },
-  { 
-    id: 3, 
-    title: '', 
-    description: '',
-    status: 'not_submitted'
-  },
-];
-
 export default function StudentAbstractsPage() {
-  const [abstracts, setAbstracts] = useState<Abstract[]>(initialAbstracts);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleAbstractChange = (id: number, field: 'title' | 'description', value: string) => {
-    setAbstracts(prev => prev.map(abs => 
-      abs.id === id ? { ...abs, [field]: value } : abs
-    ));
+  const [abstracts, setAbstracts] = useState<AbstractRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // New abstract form
+  const [showForm, setShowForm] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const groupId = (user as any)?.groupId?._id || (user as any)?.groupId;
+
+  // Fetch abstracts for the student's group
+  const fetchAbstracts = async () => {
+    if (!groupId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const data = await apiGet<{ success: boolean; count: number; data: AbstractRecord[] }>(
+        `/abstracts/group/${groupId}`
+      );
+      if (data.success) {
+        setAbstracts(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch abstracts:', error);
+      toast({ title: 'Error', description: 'Failed to load abstracts.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAbstracts();
+  }, [groupId]);
+
+  // Submit a new abstract
+  const handleSubmit = async () => {
+    if (!newTitle.trim() || !newDescription.trim()) {
+      toast({ title: 'Missing Fields', description: 'Please fill in both title and description.', variant: 'destructive' });
+      return;
+    }
+    if (!groupId) {
+      toast({ title: 'No Group', description: 'You must be assigned to a group before submitting an abstract.', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (selectedFile) {
+        // Upload with file
+        const formData = new FormData();
+        formData.append('title', newTitle.trim());
+        formData.append('description', newDescription.trim());
+        formData.append('groupId', groupId);
+        formData.append('file', selectedFile);
+        await apiUpload('/abstracts', formData);
+      } else {
+        // Submit without file
+        await apiPost('/abstracts', {
+          title: newTitle.trim(),
+          description: newDescription.trim(),
+          groupId,
+        });
+      }
+
+      toast({ title: 'Abstract Submitted', description: 'Your abstract has been submitted for review.' });
+      setNewTitle('');
+      setNewDescription('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setShowForm(false);
+      fetchAbstracts();
+    } catch (error: any) {
+      console.error('Failed to submit abstract:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to submit abstract.', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
         return <Badge className="bg-success text-success-foreground"><CheckCircle className="h-3 w-3 mr-1" />Approved</Badge>;
-      case 'correction_needed':
-        return <Badge className="bg-warning text-warning-foreground"><AlertCircle className="h-3 w-3 mr-1" />Correction Needed</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Pending Review</Badge>;
+      case 'rejected':
+        return <Badge className="bg-destructive text-destructive-foreground"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
       default:
-        return <Badge variant="outline">Not Submitted</Badge>;
+        return <Badge className="bg-warning text-warning-foreground"><AlertCircle className="h-3 w-3 mr-1" />Pending Review</Badge>;
     }
   };
 
-  const canEdit = (status: string) => status === 'not_submitted' || status === 'correction_needed';
-
-  // Find the finalized abstract
   const finalizedAbstract = abstracts.find(abs => abs.status === 'approved');
+  const hasApproved = !!finalizedAbstract;
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
   return (
     <DashboardLayout role="student">
       <div className="space-y-6 animate-fade-in">
         {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Abstract Submission</h1>
-          <p className="text-muted-foreground">Submit up to 3 abstract proposals for your project</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Abstract Submission</h1>
+            <p className="text-muted-foreground">Submit abstract proposals for your project</p>
+          </div>
+          {!hasApproved && !showForm && groupId && (
+            <Button className="btn-success" onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Abstract
+            </Button>
+          )}
         </div>
 
-        {/* Status Overview */}
+        {/* No group warning */}
+        {!groupId && (
+          <Card className="border-warning bg-warning/5">
+            <CardContent className="p-6 text-center">
+              <AlertCircle className="h-8 w-8 mx-auto text-warning mb-2" />
+              <p className="font-medium">You are not assigned to any group yet.</p>
+              <p className="text-sm text-muted-foreground">Contact your mentor or HOD to be assigned to a group before submitting abstracts.</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Approved banner */}
         {finalizedAbstract && (
           <Card className="border-success bg-success/5">
             <CardHeader>
@@ -93,100 +181,142 @@ export default function StudentAbstractsPage() {
           </Card>
         )}
 
-        {/* Abstract Forms */}
-        <div className="space-y-6">
-          {abstracts.map((abstract, index) => (
-            <Card key={abstract.id} className={abstract.status === 'approved' ? 'border-success' : ''}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary font-semibold">
-                      {index + 1}
-                    </div>
-                    Abstract {index + 1}
-                  </CardTitle>
-                  {getStatusBadge(abstract.status)}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Feedback if any */}
-                {abstract.feedback && (
-                  <div className={`p-3 rounded-lg ${
-                    abstract.status === 'approved' ? 'bg-success/10 border border-success/20' : 
-                    'bg-warning/10 border border-warning/20'
-                  }`}>
-                    <p className="text-sm font-medium mb-1">Feedback from Mentor:</p>
-                    <p className="text-sm text-muted-foreground">{abstract.feedback}</p>
+        {/* New Abstract Form */}
+        {showForm && (
+          <Card className="border-primary">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Submit New Abstract
+              </CardTitle>
+              <CardDescription>Fill in your project abstract details below</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Abstract Title *</Label>
+                <Input
+                  placeholder="Enter your abstract title"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Abstract Description *</Label>
+                <Textarea
+                  placeholder="Describe your project idea in detail..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  rows={5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Attach Document (Optional)</Label>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button className="btn-success" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Submit Abstract
+                </Button>
+                <Button variant="outline" onClick={() => { setShowForm(false); setNewTitle(''); setNewDescription(''); setSelectedFile(null); }}>
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Existing Abstracts List */}
+        {!loading && abstracts.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Your Abstracts ({abstracts.length})</h2>
+            {abstracts.map((abstract, index) => (
+              <Card key={abstract._id} className={abstract.status === 'approved' ? 'border-success' : ''}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary font-semibold">
+                        {index + 1}
+                      </div>
+                      {abstract.title}
+                    </CardTitle>
+                    {getStatusBadge(abstract.status)}
                   </div>
-                )}
+                  <CardDescription>
+                    Submitted on {new Date(abstract.createdAt).toLocaleDateString()} by {abstract.submittedBy?.name || 'Unknown'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Feedback */}
+                  {abstract.feedback && (
+                    <div className={`p-3 rounded-lg ${
+                      abstract.status === 'approved' ? 'bg-success/10 border border-success/20' :
+                      'bg-destructive/10 border border-destructive/20'
+                    }`}>
+                      <p className="text-sm font-medium mb-1">
+                        Feedback from {abstract.reviewedBy?.name || 'Reviewer'}:
+                      </p>
+                      <p className="text-sm text-muted-foreground">{abstract.feedback}</p>
+                    </div>
+                  )}
 
-                {/* Abstract Title */}
-                <div className="space-y-2">
-                  <Label>Abstract Title</Label>
-                  <Input
-                    placeholder="Enter your abstract title"
-                    value={abstract.title}
-                    onChange={(e) => handleAbstractChange(abstract.id, 'title', e.target.value)}
-                    disabled={!canEdit(abstract.status)}
-                  />
-                </div>
+                  {/* Description */}
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Description</Label>
+                    <p className="text-sm bg-muted/30 p-3 rounded-lg">{abstract.description}</p>
+                  </div>
 
-                {/* Abstract Description */}
-                <div className="space-y-2">
-                  <Label>Abstract Description</Label>
-                  <Textarea
-                    placeholder="Describe your project idea in detail..."
-                    value={abstract.description}
-                    onChange={(e) => handleAbstractChange(abstract.id, 'description', e.target.value)}
-                    disabled={!canEdit(abstract.status)}
-                    rows={4}
-                  />
-                </div>
-
-                {/* File Upload */}
-                <div className="space-y-2">
-                  <Label>Abstract Document (Optional)</Label>
-                  {abstract.fileName ? (
+                  {/* File download */}
+                  {abstract.fileUrl && (
                     <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
                       <FileText className="h-5 w-5 text-primary" />
-                      <span className="flex-1 text-sm font-medium">{abstract.fileName}</span>
-                      <Button variant="ghost" size="sm" className="text-info">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
+                      <span className="flex-1 text-sm font-medium">Attached Document</span>
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={`${API_BASE.replace('/api', '')}${abstract.fileUrl}`} target="_blank" rel="noopener noreferrer">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </a>
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Download
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={`${API_BASE.replace('/api', '')}${abstract.fileUrl}`} download>
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
+                        </a>
                       </Button>
                     </div>
-                  ) : (
-                    <Input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      disabled={!canEdit(abstract.status)}
-                    />
                   )}
-                </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-                {/* Action Buttons */}
-                {canEdit(abstract.status) && (
-                  <div className="flex gap-2 pt-2">
-                    <Button className="btn-success">
-                      <Save className="h-4 w-4 mr-2" />
-                      {abstract.status === 'not_submitted' ? 'Submit Abstract' : 'Resubmit'}
-                    </Button>
-                    {abstract.fileName && (
-                      <Button variant="outline">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Replace File
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Empty state */}
+        {!loading && groupId && abstracts.length === 0 && !showForm && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="font-medium text-lg mb-1">No abstracts submitted yet</p>
+              <p className="text-sm text-muted-foreground mb-4">Click "New Abstract" to submit your first project abstract.</p>
+              <Button className="btn-success" onClick={() => setShowForm(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Submit Your First Abstract
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Instructions */}
         <Card>
@@ -195,11 +325,11 @@ export default function StudentAbstractsPage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>You can submit up to 3 abstract proposals</li>
-              <li>At least one abstract must be approved to proceed with the project</li>
-              <li>Your mentor will review and provide feedback on each submission</li>
-              <li>If corrections are needed, update the abstract and resubmit</li>
-              <li>Once approved, you can view and download your finalized abstract</li>
+              <li>Submit your abstract proposal with a clear title and detailed description</li>
+              <li>You can optionally attach a PDF/DOC file with your abstract document</li>
+              <li>Your mentor/HOD will review and provide feedback</li>
+              <li>If your abstract is rejected, you can submit a new one with corrections</li>
+              <li>Once approved, you can proceed with document submissions</li>
             </ul>
           </CardContent>
         </Card>

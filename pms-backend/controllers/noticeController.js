@@ -5,7 +5,7 @@ const Notice = require('../models/Notice');
 // @access  Private (admin)
 const createNotice = async (req, res) => {
   try {
-    const { title, purpose, startDate, dueDate } = req.body;
+    const { title, purpose, startDate, dueDate, sentToStudents, sentToGuides } = req.body;
 
     const notice = await Notice.create({
       title,
@@ -13,6 +13,8 @@ const createNotice = async (req, res) => {
       startDate,
       dueDate,
       type: 'manual',
+      sentToStudents: !!sentToStudents,
+      sentToGuides: !!sentToGuides,
       createdBy: req.user.id,
     });
 
