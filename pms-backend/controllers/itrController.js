@@ -162,7 +162,7 @@ const getITRStudents = async (req, res) => {
       .sort({ createdAt: -1 });
 
     // Get unique students from ITR records
-    const studentMap = {};
+    console.log("ITR query:", itrQuery); console.log("Found records:", records.length); const studentMap = {};
     records.forEach(record => {
       if (record.studentId) {
         const sid = record.studentId._id.toString();

@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
 const User = require('./models/User');
 const StudentGroup = require('./models/StudentGroup');
 const Abstract = require('./models/Abstract');
@@ -580,6 +582,126 @@ const seedDB = async () => {
     }
     console.log(`\n✓ ${students2024Created} students (AY 2024-25) created`);
     console.log(`✓ ${groups2024Created} groups (AY 2024-25) created\n`);
+
+    // ── 12. Create AY 2023-24 ITR Students (from ITR 23-24 list - Sheet2.csv) ──
+    console.log('─── AY 2023-24 ITR List ───');
+    const itr2023CsvPath = path.join(__dirname, '../imp files/ITR 23-24 list - Sheet2.csv');
+    let itr2023Created = 0;
+
+    if (fs.existsSync(itr2023CsvPath)) {
+      const itrCsvData = fs.readFileSync(itr2023CsvPath, 'utf-8');
+      const itrLines = itrCsvData.split('\n').map(l => l.trim()).filter(l => l);
+
+      // Data format: Roll No, Entrollment No,Student Name,Name  of Company
+      for (let i = 0; i < itrLines.length; i++) {
+        const line = itrLines[i];
+        if (line.startsWith('Roll No') || line === ',,,') continue; // header or empty
+
+        const parts = line.split(',');
+        if (parts.length < 4) continue;
+
+        const roll = parts[0].replace(/"/g, '').trim();
+        const enroll = parts[1].replace(/"/g, '').trim();
+        const name = parts[2].replace(/"/g, '').trim();
+        const company = parts[3].replace(/"/g, '').trim();
+
+        if (!name || !company) continue;
+
+        // Generate a unique email using first name and roll number
+        const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+        const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2023@sandip.edu`;
+
+        // Create student
+        const student = await User.create({
+          name: name,
+          email: email,
+          password: 'student123',
+          role: 'student',
+          enrollmentNumber: enroll,
+          rollNumber: roll,
+          department: 'CO',
+          className: 'TY Diploma',
+          division: 'A',
+          academicYear: '2023-24',
+        });
+
+        // Create ITR Record
+        await ITR.create({
+          studentId: student._id,
+          companyName: company,
+          startDate: new Date('2024-05-15'), // Estimated past date
+          endDate: new Date('2024-06-30'), // Estimated past date
+          status: 'completed',
+          coordinatorId: itrCoord._id,
+          dailyDetails: [],
+        });
+        itr2023Created++;
+      }
+      console.log(`✓ ${itr2023Created} students & ITR records (AY 2023-24) created\n`);
+      itrCreated += itr2023Created;
+    } else {
+      console.log('⚠ ITR 2023-24 CSV file not found at path: ' + itr2023CsvPath + '\n');
+    }
+
+    // ── 13. Create AY 2025-26 ITR Students (from ITR student list 2025-26 - CO.csv) ──
+    console.log('─── AY 2025-26 ITR List ───');
+    const itr2025CsvPath = path.join(__dirname, '../imp files/ITR student list 2025-26 - CO.csv');
+    let itr2025Created = 0;
+
+    if (fs.existsSync(itr2025CsvPath)) {
+      const itrCsvData = fs.readFileSync(itr2025CsvPath, 'utf-8');
+      const itrLines = itrCsvData.split('\n').map(l => l.trim()).filter(l => l);
+
+      // Data format: Roll No,Enrollment Number,Name of the Student,Mobile No.,Technology,Company Name
+      for (let i = 0; i < itrLines.length; i++) {
+        const line = itrLines[i];
+        if (line.startsWith('Roll') || line.startsWith('ITR')) continue; // header or title row
+
+        const parts = line.split(',');
+        if (parts.length < 6) continue;
+
+        const roll = parts[0].replace(/"/g, '').trim();
+        const enroll = parts[1].replace(/"/g, '').trim();
+        const name = parts[2].replace(/"/g, '').trim();
+        const company = parts[5].replace(/"/g, '').trim(); // column index 5 is Company Name
+
+        if (!name || !company) continue;
+
+        // Generate a unique email
+        const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+        const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2025@sandip.edu`;
+
+        // Create student
+        const student = await User.create({
+          name: name,
+          email: email,
+          password: 'student123',
+          role: 'student',
+          enrollmentNumber: enroll,
+          rollNumber: roll,
+          department: 'CO',
+          className: 'TY Diploma',
+          division: 'A',
+          academicYear: '2025-26', // Set to 2025-26
+        });
+
+        // Create ITR Record
+        await ITR.create({
+          studentId: student._id,
+          companyName: company,
+          startDate: new Date('2026-05-15'), // Estimated future date
+          endDate: new Date('2026-06-30'), // Estimated future date
+          status: 'ongoing',
+          coordinatorId: itrCoord._id,
+          dailyDetails: [],
+        });
+        itr2025Created++;
+      }
+      console.log(`✓ ${itr2025Created} students & ITR records (AY 2025-26) created\n`);
+      itrCreated += itr2025Created;
+    } else {
+      console.log('⚠ ITR 2025-26 CSV file not found at path: ' + itr2025CsvPath + '\n');
+    }
 
     // ── Summary ──
     console.log('═══════════════════════════════════════════');
