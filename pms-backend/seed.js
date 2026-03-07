@@ -119,24 +119,24 @@ const rollToIndex = {};
 studentsData.forEach((s, i) => { rollToIndex[s.rollNumber] = i; });
 
 const groupsConfig = [
-  { name: 'G1',  rollNos: ['47','38','27','14'], guideName: 'Mr. V.B. Ohol',       projectTitle: 'Smart Salon Management' },
-  { name: 'G2',  rollNos: ['13','32','43'],       guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Automated Counting and Sorting using Image Segmentation and Detection' },
-  { name: 'G3',  rollNos: ['58','15','2','12'],   guideName: 'Mrs. R.S. Thete',     projectTitle: 'Platform for Events' },
-  { name: 'G4',  rollNos: ['34','6','18','25'],    guideName: 'Mrs. R.K. Ghate',     projectTitle: 'NBA-SAR Automation Platform of Point-4 (Student Performance)' },
-  { name: 'G5',  rollNos: ['44','29','51','24'],   guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Block Chain Technology' },
-  { name: 'G6',  rollNos: ['19','46','4','31'],    guideName: 'Mrs. R.S. Thete',     projectTitle: 'Digital Animal Market Platform' },
-  { name: 'G7',  rollNos: ['11','3','17','52'],    guideName: 'Mrs. R.K. Ghate',     projectTitle: 'Virtual Queue Management System' },
-  { name: 'G8',  rollNos: ['22','60'],             guideName: 'Mrs. P.B. Datir',     projectTitle: 'Project Management System' },
-  { name: 'G9',  rollNos: ['37','50','55','10'],   guideName: 'Mrs. V.A. Wagh',      projectTitle: 'Digital Garbage Management System' },
-  { name: 'G10', rollNos: ['8','16','59','61'],    guideName: 'Mr. Y.N. Jadhav',     projectTitle: 'OBE Tracking System (Point-3)' },
-  { name: 'G11', rollNos: ['49','41','54'],        guideName: 'Mrs. P.B. Datir',     projectTitle: 'Smart Tourist Safety Monitoring and Incident Response System' },
-  { name: 'G12', rollNos: ['9','30','26','20'],    guideName: 'Mr. Y.N. Jadhav',     projectTitle: 'AI-Based Smart Study Planner' },
-  { name: 'G13', rollNos: ['62','65','67','68'],   guideName: 'Mr. V.B. Ohol',       projectTitle: 'Time-Table Management System' },
-  { name: 'G14', rollNos: ['21','35','36','53'],   guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Accessibility Mapping Application for People with Disability' },
-  { name: 'G15', rollNos: ['56','57','64'],        guideName: 'Mrs. R.K. Ghate',     projectTitle: 'Mess Management System' },
-  { name: 'G16', rollNos: ['5','23','39','40'],    guideName: 'Mrs. R.S. Thete',     projectTitle: 'Safe Voice (Anonymous Reporting APP)' },
-  { name: 'G17', rollNos: ['66','42','45','28'],   guideName: 'Mrs. V.A. Wagh',      projectTitle: 'The End (Funeral Management and Crematorium Booking System)' },
-  { name: 'G18', rollNos: ['1','7','33','48'],     guideName: 'Mrs. P.B. Datir',     projectTitle: 'True Source (Facts Checker)' },
+  { name: 'G1', rollNos: ['47', '38', '27', '14'], guideName: 'Mr. V.B. Ohol', projectTitle: 'Smart Salon Management' },
+  { name: 'G2', rollNos: ['13', '32', '43'], guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Automated Counting and Sorting using Image Segmentation and Detection' },
+  { name: 'G3', rollNos: ['58', '15', '2', '12'], guideName: 'Mrs. R.S. Thete', projectTitle: 'Platform for Events' },
+  { name: 'G4', rollNos: ['34', '6', '18', '25'], guideName: 'Mrs. R.K. Ghate', projectTitle: 'NBA-SAR Automation Platform of Point-4 (Student Performance)' },
+  { name: 'G5', rollNos: ['44', '29', '51', '24'], guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Block Chain Technology' },
+  { name: 'G6', rollNos: ['19', '46', '4', '31'], guideName: 'Mrs. R.S. Thete', projectTitle: 'Digital Animal Market Platform' },
+  { name: 'G7', rollNos: ['11', '3', '17', '52'], guideName: 'Mrs. R.K. Ghate', projectTitle: 'Virtual Queue Management System' },
+  { name: 'G8', rollNos: ['22', '60'], guideName: 'Mrs. P.B. Datir', projectTitle: 'Project Management System' },
+  { name: 'G9', rollNos: ['37', '50', '55', '10'], guideName: 'Mrs. V.A. Wagh', projectTitle: 'Digital Garbage Management System' },
+  { name: 'G10', rollNos: ['8', '16', '59', '61'], guideName: 'Mr. Y.N. Jadhav', projectTitle: 'OBE Tracking System (Point-3)' },
+  { name: 'G11', rollNos: ['49', '41', '54'], guideName: 'Mrs. P.B. Datir', projectTitle: 'Smart Tourist Safety Monitoring and Incident Response System' },
+  { name: 'G12', rollNos: ['9', '30', '26', '20'], guideName: 'Mr. Y.N. Jadhav', projectTitle: 'AI-Based Smart Study Planner' },
+  { name: 'G13', rollNos: ['62', '65', '67', '68'], guideName: 'Mr. V.B. Ohol', projectTitle: 'Time-Table Management System' },
+  { name: 'G14', rollNos: ['21', '35', '36', '53'], guideName: 'Mrs. R.V. Deshpande', projectTitle: 'Accessibility Mapping Application for People with Disability' },
+  { name: 'G15', rollNos: ['56', '57', '64'], guideName: 'Mrs. R.K. Ghate', projectTitle: 'Mess Management System' },
+  { name: 'G16', rollNos: ['5', '23', '39', '40'], guideName: 'Mrs. R.S. Thete', projectTitle: 'Safe Voice (Anonymous Reporting APP)' },
+  { name: 'G17', rollNos: ['66', '42', '45', '28'], guideName: 'Mrs. V.A. Wagh', projectTitle: 'The End (Funeral Management and Crematorium Booking System)' },
+  { name: 'G18', rollNos: ['1', '7', '33', '48'], guideName: 'Mrs. P.B. Datir', projectTitle: 'True Source (Facts Checker)' },
 ];
 
 // ─── Seed Function ───────────────────────────────────────────────────────
@@ -263,47 +263,8 @@ const seedDB = async () => {
     }
     console.log(`✓ ${abstractsCreated.length} abstracts created (mixed statuses)\n`);
 
-    // ── 7. Create Documents (various types across groups) ──
-    const docTypes = ['synopsis', 'ppt_stage_one', 'ppt_final', 'weekly_diary', 'black_book', 'first_project_report', 'final_report', 'sponsorship_letter'];
-    const docStatuses = ['pending', 'approved', 'needs_correction', 'verified'];
-    let docsCreated = 0;
-
-    for (let i = 0; i < groups.length; i++) {
-      const gc = groupsConfig[i];
-      const firstMemberIdx = rollToIndex[gc.rollNos[0]];
-      const uploader = students[firstMemberIdx];
-      const reviewer = mentors.find(m => m.name === gc.guideName);
-
-      // Each group gets 2-3 documents
-      const numDocs = 2 + (i % 2);
-      for (let d = 0; d < numDocs; d++) {
-        const docType = docTypes[(i + d) % docTypes.length];
-        const status = docStatuses[(i + d) % docStatuses.length];
-        const docData = {
-          type: docType,
-          fileName: `${gc.name}_${docType}_v${d + 1}.pdf`,
-          fileUrl: `/uploads/${gc.name}_${docType}_v${d + 1}.pdf`,
-          uploadedBy: uploader._id,
-          groupId: groups[i]._id,
-          stage: d < 2 ? 1 : 2,
-          status,
-        };
-
-        if (status === 'approved' || status === 'verified') {
-          docData.feedback = 'Document reviewed and accepted. Good work.';
-          docData.reviewedBy = reviewer?._id;
-          docData.reviewedAt = new Date('2026-02-25');
-        } else if (status === 'needs_correction') {
-          docData.feedback = 'Formatting issues found. Please fix the header layout and re-upload.';
-          docData.reviewedBy = reviewer?._id;
-          docData.reviewedAt = new Date('2026-02-24');
-        }
-
-        await Document.create(docData);
-        docsCreated++;
-      }
-    }
-    console.log(`✓ ${docsCreated} documents created\n`);
+    // ── 7. Documents — skipped (students upload actual documents via UI) ──
+    console.log('✓ Documents: skipped (students upload via the Documents page)\n');
 
     // ── 8. Create Certificates (various types, some verified) ──
     const certTypes = ['itr_certificate', 'published_paper', 'project_competition', 'udemy_course'];
@@ -341,22 +302,22 @@ const seedDB = async () => {
       {
         company: 'Ideal Tech Infotech, Nashik',
         mentorName: 'Mr. Y.N. Jadhav',
-        rollNos: ['4','5','6','7','8','9','13','14','18','19','24','25','27','28','29','30','31','32','33','35','36','38','39','40','44','45','46','47','50','51','62','65','68'],
+        rollNos: ['4', '5', '6', '7', '8', '9', '13', '14', '18', '19', '24', '25', '27', '28', '29', '30', '31', '32', '33', '35', '36', '38', '39', '40', '44', '45', '46', '47', '50', '51', '62', '65', '68'],
       },
       {
         company: 'Softcrowd Technologies, Nashik',
         mentorName: 'Mrs. P.B. Datir',
-        rollNos: ['1','2','10','22','23','37','55','59','60','61','64','66','67'],
+        rollNos: ['1', '2', '10', '22', '23', '37', '55', '59', '60', '61', '64', '66', '67'],
       },
       {
         company: 'Calibers Infotech, Nashik',
         mentorName: 'Mrs. R.V. Deshpande',
-        rollNos: ['12','15','16','20','21','26','34','41','42','43','48','49','53','54','56','58'],
+        rollNos: ['12', '15', '16', '20', '21', '26', '34', '41', '42', '43', '48', '49', '53', '54', '56', '58'],
       },
       {
         company: 'Codedrift Academy, Nashik',
         mentorName: 'Mrs. R.K. Ghate',
-        rollNos: ['3','11','17','52','57','63'],
+        rollNos: ['3', '11', '17', '52', '57', '63'],
       },
     ];
 
@@ -423,115 +384,153 @@ const seedDB = async () => {
 
     // 2024-25 groups from CSV (19 groups) — with actual emails from TYCO_24_TO_25 CSV
     const groups2024 = [
-      { grNo: '1', students: [
-        { name: 'Kumbhar Mrunmai Sandip', enrollment: '2211670158', email: 'mrunmaikumbhar07@gmail.com' },
-        { name: 'Aher Shubham Arun', enrollment: '2211670141', email: 'shubhamaher349@gmail.com' },
-        { name: 'Suraywanshi Dipika Shantaram', enrollment: '2211670133', email: 'suryawanshidipika5@gmail.com' },
-        { name: 'Gole Apurva Anand', enrollment: '2211670147', email: 'apurvagole45@gmail.com' },
-      ], project: 'Aerosense', guide: 'Prof.V.B.Ohol' },
-      { grNo: '2', students: [
-        { name: 'Chaudhari Vaishnavi Nitin', enrollment: '2211670160', email: 'Vaishnavichaudhari666@gmail.com' },
-        { name: 'Shejwal Sai Devidas', enrollment: '2211670139', email: 'saishshejwal008@gmail.com' },
-        { name: 'Kadam Maina Haribhau', enrollment: '2211670143', email: 'kadammaina707@gmail.com' },
-        { name: 'Nathe Vicky Anil', enrollment: '2211670157', email: 'vickynathe45@gmail.com' },
-      ], project: 'Crime Management System', guide: 'Prof.R.V.Deshpande' },
-      { grNo: '3', students: [
-        { name: 'Patil Mansi Pravin', enrollment: '2211670104', email: 'pmansi2006@gmail.com' },
-        { name: 'Bharti Anjali Ashok', enrollment: '2211670108', email: 'anjalibharti4131@gmail.com' },
-        { name: 'Mule Bhakti Vitthal', enrollment: '2211670128', email: 'bhaktimule4962@gmail.com' },
-        { name: 'Bajaj Gayatri Anil', enrollment: '23611780239', email: 'gayatribajaj02@gmail.com' },
-      ], project: 'Website for Self Diagnosis and Drug Recommendation', guide: 'Prof.R.V.Deshpande' },
-      { grNo: '4', students: [
-        { name: 'Darade Ruchita Nitin', enrollment: '2211670112', email: 'daraderuchita742@gmail.com' },
-        { name: 'Borse Bhagyashri Sunil', enrollment: '2211670103', email: 'bhagyashreeborse30@gmail.com' },
-        { name: 'Zalte Vedika Haribhau', enrollment: '2211670152', email: 'vedikazalte2309@gmail.com' },
-        { name: 'Pagar Sakshi Shivdas', enrollment: '23611780251', email: 'sakshipagar806@gmail.com' },
-      ], project: 'Smart Tourist', guide: 'Prof.P.B.Datir' },
-      { grNo: '5', students: [
-        { name: 'Gamne Chaitanya Sanjay', enrollment: '2211670138', email: 'chaitanyagamane@gmail.com' },
-        { name: 'Jagtap Shradha Suresh', enrollment: '2211670111', email: 'shraddhajagtap9826@gmail.com' },
-        { name: 'Mahale Paras Nitin', enrollment: '2211670145', email: 'prsmahale@gmail.com' },
-        { name: 'Jadhav Omkar Machindra', enrollment: '2211670159', email: 'omkarjadhavm5@gmail.com' },
-      ], project: 'Farmer Equipment Rental Web Application', guide: 'Prof.V.B.Ohol' },
-      { grNo: '6', students: [
-        { name: 'Suryawanshi Vishwajeet Nitin', enrollment: '2211670154', email: 'Visuryswanshi@gmail.com' },
-        { name: 'Rathore Vaibhav', enrollment: '2211670150', email: 'vaibhavrathore285@gmail.com' },
-        { name: 'Katore Prasad Dattu', enrollment: '2211670335', email: 'prasadkatore2004@gmail.com' },
-        { name: 'Sanap Kunal Vilas', enrollment: '2211670122', email: 'kunalsanap8484@gmail.com' },
-      ], project: 'Car Buying Guide', guide: 'Prof.Y.N.Jadhav' },
-      { grNo: '7', students: [
-        { name: 'Vende Prajwal Nitin', enrollment: '2211670102', email: 'prajwalvende06@gmail.com' },
-        { name: 'Kakulte Om Jagannath', enrollment: '2211670140', email: 'omkakulte38@gmail.com' },
-        { name: 'Badgujar Gaurav Vijay', enrollment: '2211670100', email: 'badgujargaurav276@gmail.com' },
-        { name: 'Patil Manas Yuvraj', enrollment: '2211670144', email: 'manasp287@gmail.com' },
-      ], project: 'Quick Offline Pay', guide: 'Prof.Y.N.Jadhav' },
-      { grNo: '8', students: [
-        { name: 'Borse Aditya Sharad', enrollment: '2211670099', email: 'adiborse46@gmail.com' },
-        { name: 'Tajne Rugved Vijay', enrollment: '2211670131', email: 'rugvedtajane04@gmail.com' },
-        { name: 'Patil Vaishnavi Hemraj', enrollment: '2211670153', email: 'Vaishnavipatil1076@gmail.com' },
-      ], project: 'Career Path Finder', guide: 'Prof.V.B.Ohol' },
-      { grNo: '9', students: [
-        { name: 'Pagar Ashwini Avinash', enrollment: '2211670129', email: 'avinashpagare5555@gmail.com' },
-        { name: 'Jadhav Shubham Abasaheb', enrollment: '23611780243', email: 'jadhavshubham2002sj@gmail.com' },
-        { name: 'Thakre Manjusha Ashok', enrollment: '23611780240', email: 'manjuthakare2004@gmail.com' },
-        { name: 'Bhondawe Mayuresh Keshav', enrollment: '23611780245', email: 'mayurbhondwe636@gmail.com' },
-      ], project: 'Real Time Visitor Tracker of Goshala', guide: 'Prof.R.S.Thete' },
-      { grNo: '10', students: [
-        { name: 'Dawange Sahil Suresh', enrollment: '2211670105', email: 'sahildawange37@gmail.com' },
-        { name: 'Jamdar Sarvesh Jitendra', enrollment: '2211670095', email: 'sarvesh.sj01@gmail.com' },
-        { name: 'Ahire Prajwal Manik', enrollment: '2211670106', email: 'prajwalahire2@gmail.com' },
-        { name: 'Koli Snehal Prabhakar', enrollment: '2211670130', email: 'kolisonu565@gmail.com' },
-      ], project: 'Mental Health Consulting Website', guide: 'Prof.R.V.Deshpande' },
-      { grNo: '11', students: [
-        { name: 'Rathore Krishna', enrollment: '2211670146', email: 'krishnarathore0802@gmail.com' },
-        { name: 'Gawali Gananjay Kashinath', enrollment: '2211670097', email: 'gananjaygawali@gmail.com' },
-        { name: 'Chaudhari Pushkar Govind', enrollment: '2211670149', email: 'chaudharipushkar412@gmail.com' },
-        { name: 'Shinde Siddharth Santosh', enrollment: '2211670118', email: 'siddharthsshinde9822@gmail.com' },
-      ], project: 'Health Care Adviser Application', guide: 'Prof.Y.N.Jadhav' },
-      { grNo: '12', students: [
-        { name: 'Gangurde Kasturi Devaji', enrollment: '2211670107', email: 'gangurdekasturi@gmail.com' },
-        { name: 'Bhamre Shruti Prashant', enrollment: '2211670137', email: 'bhamareshruti012@gmail.com' },
-        { name: 'Zade Tanishka Nandu', enrollment: '2211670151', email: 'tanishkazade123@gmail.com' },
-      ], project: 'Agri Shop For Farmer', guide: 'Prof.G.P.Bharne' },
-      { grNo: '13', students: [
-        { name: 'Patil Kajal Laxman', enrollment: '2211670110', email: 'kajallpatil2007@gmail.com' },
-        { name: 'Bhandure Vaishnavi Sampat', enrollment: '2211670142', email: 'vaishnavibhandure01@gmail.com' },
-        { name: 'Halor Kalyani Sanjay', enrollment: '2111670136', email: null },
-        { name: 'Gauri Pawar', enrollment: '23611780241', email: null },
-      ], project: 'Smart Street Light System', guide: 'Prof.G.P.Bharne' },
-      { grNo: '14', students: [
-        { name: 'Patil Bhagyashri Nitin', enrollment: '2211670132', email: 'patilbn2006@gmail.com' },
-        { name: 'Siddhant Gangurde Kiran', enrollment: '2211670116', email: 'kirangangurde955@gmail.com' },
-      ], project: 'E-plastic Waste Management Application', guide: 'Prof.R.V.Deshpande' },
-      { grNo: '15', students: [
-        { name: 'Borse Sakshi Narayan', enrollment: '2211670114', email: 'Sakshiborse1108@gmail.com' },
-        { name: 'Chandramore Sanchita Ragnath', enrollment: '2211670117', email: 'rcchandramore2@gamil.com' },
-        { name: 'Rajput Aditi Ramchandra', enrollment: '2211670094', email: 'rajputaditti@gmail.com' },
-        { name: 'Gangurde Pranali Ashok', enrollment: '2211670113', email: 'Gangurdesavidhan@gmail.com' },
-      ], project: 'Rent My Stuff', guide: 'Prof.R.K.Ghate' },
-      { grNo: '16', students: [
-        { name: 'Khan Rehan Aslam', enrollment: '23611780250', email: 'rehan.com56789@gmail.com' },
-        { name: 'Chaudhari Aditya Aba', enrollment: '23611780247', email: 'chaudhariaditya98@gmail.com' },
-        { name: 'Mahale Vishwajit Ajabsingh', enrollment: '2211670135', email: 'Vishwajitmahale9@gmail.com' },
-        { name: 'Ilag Sanket Ashok', enrollment: '23611780244', email: 'sanketilag60@gmail.com' },
-      ], project: 'Puzzle Alarm', guide: 'Prof.P.B.Datir' },
-      { grNo: '17', students: [
-        { name: 'Bochare Sanchit Sharad', enrollment: '2211670156', email: 'Bocharesanchit2@gmail.com' },
-        { name: 'Davane Siddhant Mangesh', enrollment: '2211670101', email: 'Siddhudavane123@gmail.com' },
-        { name: 'Kale Swanand Dnyaeshwar', enrollment: '2211670155', email: 'swanandkale83@gmail.com' },
-        { name: 'Vaydeshkar Aniket Vishal', enrollment: '2211670125', email: 'krishnavaydeshkar@gmail.com' },
-      ], project: 'Labor Management System', guide: 'Prof.Y.D.Jadhav' },
-      { grNo: '18', students: [
-        { name: 'Joshi Nisha Jagannath', enrollment: '23611780248', email: 'jagannathjoshi36@gmail.com' },
-        { name: 'Deore Tanvi Manoj', enrollment: '23611780249', email: 'tanvideore91@gmail.com' },
-        { name: 'Bagul Reva Namdev', enrollment: '23611780238', email: 'revabagul2005@gmail.com' },
-        { name: 'Sonawane Krishna Bharat', enrollment: '23611780246', email: 'krushnasonawane3012@gmail.com' },
-      ], project: 'Candidate Assessment Tool', guide: 'Prof.G.P.Bharne' },
-      { grNo: '19', students: [
-        { name: 'Wani Anushka Vilas', enrollment: '2211670109', email: null },
-        { name: 'Bhirud Yamini Mohan', enrollment: '2211670119', email: 'yaminibhirud07@gmail.com' },
-        { name: 'Kundalke Shubham Kailas', enrollment: '2211670126', email: 'shubhamkundalke@gmail.com' },
-      ], project: 'Cryptography', guide: 'Prof.V.B.Ohol' },
+      {
+        grNo: '1', students: [
+          { name: 'Kumbhar Mrunmai Sandip', enrollment: '2211670158', email: 'mrunmaikumbhar07@gmail.com' },
+          { name: 'Aher Shubham Arun', enrollment: '2211670141', email: 'shubhamaher349@gmail.com' },
+          { name: 'Suraywanshi Dipika Shantaram', enrollment: '2211670133', email: 'suryawanshidipika5@gmail.com' },
+          { name: 'Gole Apurva Anand', enrollment: '2211670147', email: 'apurvagole45@gmail.com' },
+        ], project: 'Aerosense', guide: 'Prof.V.B.Ohol'
+      },
+      {
+        grNo: '2', students: [
+          { name: 'Chaudhari Vaishnavi Nitin', enrollment: '2211670160', email: 'Vaishnavichaudhari666@gmail.com' },
+          { name: 'Shejwal Sai Devidas', enrollment: '2211670139', email: 'saishshejwal008@gmail.com' },
+          { name: 'Kadam Maina Haribhau', enrollment: '2211670143', email: 'kadammaina707@gmail.com' },
+          { name: 'Nathe Vicky Anil', enrollment: '2211670157', email: 'vickynathe45@gmail.com' },
+        ], project: 'Crime Management System', guide: 'Prof.R.V.Deshpande'
+      },
+      {
+        grNo: '3', students: [
+          { name: 'Patil Mansi Pravin', enrollment: '2211670104', email: 'pmansi2006@gmail.com' },
+          { name: 'Bharti Anjali Ashok', enrollment: '2211670108', email: 'anjalibharti4131@gmail.com' },
+          { name: 'Mule Bhakti Vitthal', enrollment: '2211670128', email: 'bhaktimule4962@gmail.com' },
+          { name: 'Bajaj Gayatri Anil', enrollment: '23611780239', email: 'gayatribajaj02@gmail.com' },
+        ], project: 'Website for Self Diagnosis and Drug Recommendation', guide: 'Prof.R.V.Deshpande'
+      },
+      {
+        grNo: '4', students: [
+          { name: 'Darade Ruchita Nitin', enrollment: '2211670112', email: 'daraderuchita742@gmail.com' },
+          { name: 'Borse Bhagyashri Sunil', enrollment: '2211670103', email: 'bhagyashreeborse30@gmail.com' },
+          { name: 'Zalte Vedika Haribhau', enrollment: '2211670152', email: 'vedikazalte2309@gmail.com' },
+          { name: 'Pagar Sakshi Shivdas', enrollment: '23611780251', email: 'sakshipagar806@gmail.com' },
+        ], project: 'Smart Tourist', guide: 'Prof.P.B.Datir'
+      },
+      {
+        grNo: '5', students: [
+          { name: 'Gamne Chaitanya Sanjay', enrollment: '2211670138', email: 'chaitanyagamane@gmail.com' },
+          { name: 'Jagtap Shradha Suresh', enrollment: '2211670111', email: 'shraddhajagtap9826@gmail.com' },
+          { name: 'Mahale Paras Nitin', enrollment: '2211670145', email: 'prsmahale@gmail.com' },
+          { name: 'Jadhav Omkar Machindra', enrollment: '2211670159', email: 'omkarjadhavm5@gmail.com' },
+        ], project: 'Farmer Equipment Rental Web Application', guide: 'Prof.V.B.Ohol'
+      },
+      {
+        grNo: '6', students: [
+          { name: 'Suryawanshi Vishwajeet Nitin', enrollment: '2211670154', email: 'Visuryswanshi@gmail.com' },
+          { name: 'Rathore Vaibhav', enrollment: '2211670150', email: 'vaibhavrathore285@gmail.com' },
+          { name: 'Katore Prasad Dattu', enrollment: '2211670335', email: 'prasadkatore2004@gmail.com' },
+          { name: 'Sanap Kunal Vilas', enrollment: '2211670122', email: 'kunalsanap8484@gmail.com' },
+        ], project: 'Car Buying Guide', guide: 'Prof.Y.N.Jadhav'
+      },
+      {
+        grNo: '7', students: [
+          { name: 'Vende Prajwal Nitin', enrollment: '2211670102', email: 'prajwalvende06@gmail.com' },
+          { name: 'Kakulte Om Jagannath', enrollment: '2211670140', email: 'omkakulte38@gmail.com' },
+          { name: 'Badgujar Gaurav Vijay', enrollment: '2211670100', email: 'badgujargaurav276@gmail.com' },
+          { name: 'Patil Manas Yuvraj', enrollment: '2211670144', email: 'manasp287@gmail.com' },
+        ], project: 'Quick Offline Pay', guide: 'Prof.Y.N.Jadhav'
+      },
+      {
+        grNo: '8', students: [
+          { name: 'Borse Aditya Sharad', enrollment: '2211670099', email: 'adiborse46@gmail.com' },
+          { name: 'Tajne Rugved Vijay', enrollment: '2211670131', email: 'rugvedtajane04@gmail.com' },
+          { name: 'Patil Vaishnavi Hemraj', enrollment: '2211670153', email: 'Vaishnavipatil1076@gmail.com' },
+        ], project: 'Career Path Finder', guide: 'Prof.V.B.Ohol'
+      },
+      {
+        grNo: '9', students: [
+          { name: 'Pagar Ashwini Avinash', enrollment: '2211670129', email: 'avinashpagare5555@gmail.com' },
+          { name: 'Jadhav Shubham Abasaheb', enrollment: '23611780243', email: 'jadhavshubham2002sj@gmail.com' },
+          { name: 'Thakre Manjusha Ashok', enrollment: '23611780240', email: 'manjuthakare2004@gmail.com' },
+          { name: 'Bhondawe Mayuresh Keshav', enrollment: '23611780245', email: 'mayurbhondwe636@gmail.com' },
+        ], project: 'Real Time Visitor Tracker of Goshala', guide: 'Prof.R.S.Thete'
+      },
+      {
+        grNo: '10', students: [
+          { name: 'Dawange Sahil Suresh', enrollment: '2211670105', email: 'sahildawange37@gmail.com' },
+          { name: 'Jamdar Sarvesh Jitendra', enrollment: '2211670095', email: 'sarvesh.sj01@gmail.com' },
+          { name: 'Ahire Prajwal Manik', enrollment: '2211670106', email: 'prajwalahire2@gmail.com' },
+          { name: 'Koli Snehal Prabhakar', enrollment: '2211670130', email: 'kolisonu565@gmail.com' },
+        ], project: 'Mental Health Consulting Website', guide: 'Prof.R.V.Deshpande'
+      },
+      {
+        grNo: '11', students: [
+          { name: 'Rathore Krishna', enrollment: '2211670146', email: 'krishnarathore0802@gmail.com' },
+          { name: 'Gawali Gananjay Kashinath', enrollment: '2211670097', email: 'gananjaygawali@gmail.com' },
+          { name: 'Chaudhari Pushkar Govind', enrollment: '2211670149', email: 'chaudharipushkar412@gmail.com' },
+          { name: 'Shinde Siddharth Santosh', enrollment: '2211670118', email: 'siddharthsshinde9822@gmail.com' },
+        ], project: 'Health Care Adviser Application', guide: 'Prof.Y.N.Jadhav'
+      },
+      {
+        grNo: '12', students: [
+          { name: 'Gangurde Kasturi Devaji', enrollment: '2211670107', email: 'gangurdekasturi@gmail.com' },
+          { name: 'Bhamre Shruti Prashant', enrollment: '2211670137', email: 'bhamareshruti012@gmail.com' },
+          { name: 'Zade Tanishka Nandu', enrollment: '2211670151', email: 'tanishkazade123@gmail.com' },
+        ], project: 'Agri Shop For Farmer', guide: 'Prof.G.P.Bharne'
+      },
+      {
+        grNo: '13', students: [
+          { name: 'Patil Kajal Laxman', enrollment: '2211670110', email: 'kajallpatil2007@gmail.com' },
+          { name: 'Bhandure Vaishnavi Sampat', enrollment: '2211670142', email: 'vaishnavibhandure01@gmail.com' },
+          { name: 'Halor Kalyani Sanjay', enrollment: '2111670136', email: null },
+          { name: 'Gauri Pawar', enrollment: '23611780241', email: null },
+        ], project: 'Smart Street Light System', guide: 'Prof.G.P.Bharne'
+      },
+      {
+        grNo: '14', students: [
+          { name: 'Patil Bhagyashri Nitin', enrollment: '2211670132', email: 'patilbn2006@gmail.com' },
+          { name: 'Siddhant Gangurde Kiran', enrollment: '2211670116', email: 'kirangangurde955@gmail.com' },
+        ], project: 'E-plastic Waste Management Application', guide: 'Prof.R.V.Deshpande'
+      },
+      {
+        grNo: '15', students: [
+          { name: 'Borse Sakshi Narayan', enrollment: '2211670114', email: 'Sakshiborse1108@gmail.com' },
+          { name: 'Chandramore Sanchita Ragnath', enrollment: '2211670117', email: 'rcchandramore2@gamil.com' },
+          { name: 'Rajput Aditi Ramchandra', enrollment: '2211670094', email: 'rajputaditti@gmail.com' },
+          { name: 'Gangurde Pranali Ashok', enrollment: '2211670113', email: 'Gangurdesavidhan@gmail.com' },
+        ], project: 'Rent My Stuff', guide: 'Prof.R.K.Ghate'
+      },
+      {
+        grNo: '16', students: [
+          { name: 'Khan Rehan Aslam', enrollment: '23611780250', email: 'rehan.com56789@gmail.com' },
+          { name: 'Chaudhari Aditya Aba', enrollment: '23611780247', email: 'chaudhariaditya98@gmail.com' },
+          { name: 'Mahale Vishwajit Ajabsingh', enrollment: '2211670135', email: 'Vishwajitmahale9@gmail.com' },
+          { name: 'Ilag Sanket Ashok', enrollment: '23611780244', email: 'sanketilag60@gmail.com' },
+        ], project: 'Puzzle Alarm', guide: 'Prof.P.B.Datir'
+      },
+      {
+        grNo: '17', students: [
+          { name: 'Bochare Sanchit Sharad', enrollment: '2211670156', email: 'Bocharesanchit2@gmail.com' },
+          { name: 'Davane Siddhant Mangesh', enrollment: '2211670101', email: 'Siddhudavane123@gmail.com' },
+          { name: 'Kale Swanand Dnyaeshwar', enrollment: '2211670155', email: 'swanandkale83@gmail.com' },
+          { name: 'Vaydeshkar Aniket Vishal', enrollment: '2211670125', email: 'krishnavaydeshkar@gmail.com' },
+        ], project: 'Labor Management System', guide: 'Prof.Y.D.Jadhav'
+      },
+      {
+        grNo: '18', students: [
+          { name: 'Joshi Nisha Jagannath', enrollment: '23611780248', email: 'jagannathjoshi36@gmail.com' },
+          { name: 'Deore Tanvi Manoj', enrollment: '23611780249', email: 'tanvideore91@gmail.com' },
+          { name: 'Bagul Reva Namdev', enrollment: '23611780238', email: 'revabagul2005@gmail.com' },
+          { name: 'Sonawane Krishna Bharat', enrollment: '23611780246', email: 'krushnasonawane3012@gmail.com' },
+        ], project: 'Candidate Assessment Tool', guide: 'Prof.G.P.Bharne'
+      },
+      {
+        grNo: '19', students: [
+          { name: 'Wani Anushka Vilas', enrollment: '2211670109', email: null },
+          { name: 'Bhirud Yamini Mohan', enrollment: '2211670119', email: 'yaminibhirud07@gmail.com' },
+          { name: 'Kundalke Shubham Kailas', enrollment: '2211670126', email: 'shubhamkundalke@gmail.com' },
+        ], project: 'Cryptography', guide: 'Prof.V.B.Ohol'
+      },
     ];
 
     let students2024Created = 0;
@@ -592,7 +591,7 @@ const seedDB = async () => {
     console.log(`  Students:        ${students.length} (password: student123)`);
     console.log(`  Groups:          ${groups.length}`);
     console.log(`  Abstracts:       ${abstractsCreated.length}`);
-    console.log(`  Documents:       ${docsCreated}`);
+    console.log(`  Documents:       0  (students upload via UI)`);
     console.log(`  Certificates:    ${certsCreated}`);
     console.log(`  Notices:         0  (create via admin panel)`);
     console.log(`  ITR Records:     ${itrCreated}`);

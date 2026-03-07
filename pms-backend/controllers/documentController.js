@@ -1,5 +1,6 @@
 const Document = require('../models/Document');
 const StudentGroup = require('../models/StudentGroup');
+const mongoose = require('mongoose');
 
 // @desc    Upload a document
 // @route   POST /api/documents
@@ -42,7 +43,8 @@ const getAllDocuments = async (req, res) => {
 
     if (type) query.type = type;
     if (stage) query.stage = parseInt(stage);
-    if (groupId) query.groupId = groupId;
+    // Only filter by groupId if it's a valid MongoDB ObjectId
+    if (groupId && mongoose.Types.ObjectId.isValid(groupId)) query.groupId = groupId;
     if (status) query.status = status;
 
     // Filter by academic year and/or department through group
