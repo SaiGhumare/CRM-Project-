@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const StudentGroup = require('../models/StudentGroup');
 
 // @desc    Get all students
 // @route   GET /api/students
@@ -24,6 +25,12 @@ const getAllStudents = async (req, res) => {
         { enrollmentNumber: { $regex: search, $options: 'i' } },
         { rollNumber: { $regex: search, $options: 'i' } },
       ];
+    }
+
+    // Mentor role: only see students in groups assigned to this mentor
+    if (req.user && req.user.role === 'mentor') {
+      const assignedGroups = await StudentGroup.find({ mentorId: req.user.id }).select('_id');
+      query.groupId = { $in: assignedGroups.map(g => g._id) };
     }
 
     const students = await User.find(query)

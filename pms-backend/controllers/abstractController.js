@@ -36,11 +36,20 @@ const getAllAbstracts = async (req, res) => {
     const query = {};
     if (status) query.status = status;
 
-    // Filter by academic year and/or department through group
-    if (academicYear || department) {
-      const groupQuery = {};
-      if (academicYear) groupQuery.academicYear = academicYear;
-      if (department) groupQuery.department = department;
+    // Filter by academic year, department, and/or mentor through group
+    const groupQuery = {};
+    let filterByGroup = false;
+
+    if (academicYear) { groupQuery.academicYear = academicYear; filterByGroup = true; }
+    if (department) { groupQuery.department = department; filterByGroup = true; }
+    
+    // Mentor role can only see abstracts from their assigned groups
+    if (req.user && req.user.role === 'mentor') {
+      groupQuery.mentorId = req.user.id;
+      filterByGroup = true;
+    }
+
+    if (filterByGroup) {
       const groups = await StudentGroup.find(groupQuery).select('_id');
       query.groupId = { $in: groups.map(g => g._id) };
     }

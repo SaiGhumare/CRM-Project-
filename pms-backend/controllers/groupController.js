@@ -54,6 +54,11 @@ const getAllGroups = async (req, res) => {
       ];
     }
 
+    // Mentor role can only see their assigned groups
+    if (req.user && req.user.role === 'mentor') {
+      query.mentorId = req.user.id;
+    }
+
     const groups = await StudentGroup.find(query)
       .populate('members', '-password')
       .populate('mentorId', '-password')

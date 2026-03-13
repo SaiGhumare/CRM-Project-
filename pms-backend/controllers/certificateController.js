@@ -40,11 +40,22 @@ const getAllCertificates = async (req, res) => {
     if (type) query.type = type;
     if (verified !== undefined) query.verified = verified === 'true';
 
-    // Filter by academic year and/or department through student
-    if (academicYear || department) {
-      const studentQuery = { role: 'student' };
-      if (academicYear) studentQuery.academicYear = academicYear;
-      if (department) studentQuery.department = department;
+    // Filter by academic year, department, and/or mentor through student
+    const studentQuery = { role: 'student' };
+    let filterByStudent = false;
+
+    if (academicYear) { studentQuery.academicYear = academicYear; filterByStudent = true; }
+    if (department) { studentQuery.department = department; filterByStudent = true; }
+    
+    // Mentor role: only see certificates from students in their assigned groups
+    if (req.user && req.user.role === 'mentor') {
+      const StudentGroup = require('../models/StudentGroup');
+      const assignedGroups = await StudentGroup.find({ mentorId: req.user.id }).select('_id');
+      studentQuery.groupId = { $in: assignedGroups.map(g => g._id) };
+      filterByStudent = true;
+    }
+
+    if (filterByStudent) {
       const students = await User.find(studentQuery).select('_id');
       query.uploadedBy = { $in: students.map(s => s._id) };
     }
