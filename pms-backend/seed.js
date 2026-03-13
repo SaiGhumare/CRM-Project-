@@ -607,23 +607,28 @@ const seedDB = async () => {
 
         if (!name || !company) continue;
 
-        // Generate a unique email using first name and roll number
-        const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
-        const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2023@sandip.edu`;
+        // Check if student already exists
+        let student = await User.findOne({ enrollmentNumber: enroll });
 
-        // Create student
-        const student = await User.create({
-          name: name,
-          email: email,
-          password: 'student123',
-          role: 'student',
-          enrollmentNumber: enroll,
-          rollNumber: roll,
-          department: 'CO',
-          className: 'TY Diploma',
-          division: 'A',
-          academicYear: '2023-24',
-        });
+        if (!student) {
+          // Generate a unique email using first name and roll number
+          const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+          const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2023@sandip.edu`;
+
+          // Create student
+          student = await User.create({
+            name: name,
+            email: email,
+            password: 'student123',
+            role: 'student',
+            enrollmentNumber: enroll,
+            rollNumber: roll,
+            department: 'CO',
+            className: 'TY Diploma',
+            division: 'A',
+            academicYear: '2023-24',
+          });
+        }
 
         // Create ITR Record
         await ITR.create({
@@ -667,23 +672,28 @@ const seedDB = async () => {
 
         if (!name || !company) continue;
 
-        // Generate a unique email
-        const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
-        const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2025@sandip.edu`;
+        // Check if student already exists
+        let student = await User.findOne({ enrollmentNumber: enroll });
 
-        // Create student
-        const student = await User.create({
-          name: name,
-          email: email,
-          password: 'student123',
-          role: 'student',
-          enrollmentNumber: enroll,
-          rollNumber: roll,
-          department: 'CO',
-          className: 'TY Diploma',
-          division: 'A',
-          academicYear: '2025-26', // Set to 2025-26
-        });
+        if (!student) {
+          // Generate a unique email
+          const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+          const email = `${firstName}${roll || Math.floor(Math.random() * 1000)}.2025@sandip.edu`;
+
+          // Create student
+          student = await User.create({
+            name: name,
+            email: email,
+            password: 'student123',
+            role: 'student',
+            enrollmentNumber: enroll,
+            rollNumber: roll,
+            department: 'CO',
+            className: 'TY Diploma',
+            division: 'A',
+            academicYear: '2025-26', // Set to 2025-26
+          });
+        }
 
         // Create ITR Record
         await ITR.create({
@@ -701,6 +711,51 @@ const seedDB = async () => {
       itrCreated += itr2025Created;
     } else {
       console.log('⚠ ITR 2025-26 CSV file not found at path: ' + itr2025CsvPath + '\n');
+    }
+
+    // ── 14. Patch Actual Emails from CSVs ──
+    console.log('─── Patching Actual Emails ───');
+
+    // Patch 2024-25
+    const tyco24_25CsvPath = path.join(__dirname, '../TYCO_24_TO_25_with emails - Sheet1.csv');
+    if (fs.existsSync(tyco24_25CsvPath)) {
+      const csvData = fs.readFileSync(tyco24_25CsvPath, 'utf-8');
+      const lines = csvData.split('\n');
+      let patched24 = 0;
+      for (const line of lines) {
+        const parts = line.split(',');
+        if (parts.length >= 8 && parts[2]) {
+          const enroll = parts[2].replace(/"/g, '').trim();
+          const email = parts[7] ? parts[7].replace(/"/g, '').trim() : '';
+          if (enroll && email && email !== 'Mail ID' && email !== 'null' && email.includes('@')) {
+            // Use updateMany so that duplicate ITR records with the same enrollment number get patched too
+            const result = await User.updateMany({ enrollmentNumber: enroll }, { email: email });
+            patched24 += result.modifiedCount;
+          }
+        }
+      }
+      console.log(`✓ Patched ${patched24} emails for AY 2024-25`);
+    }
+
+    // Patch 2025-26
+    const tyco25_26CsvPath = path.join(__dirname, '../tyco rollcall list - Sheet1_with_actual_emails.csv');
+    if (fs.existsSync(tyco25_26CsvPath)) {
+      const csvData = fs.readFileSync(tyco25_26CsvPath, 'utf-8');
+      const lines = csvData.split('\n');
+      let patched25 = 0;
+      for (const line of lines) {
+        const parts = line.split(',');
+        if (parts.length >= 8 && parts[2]) {
+          const enroll = parts[2].replace(/"/g, '').trim();
+          const email = parts[7] ? parts[7].replace(/"/g, '').trim() : '';
+          if (enroll && email && email !== 'Mail ID' && email !== 'null' && email.includes('@')) {
+            // Use updateMany so that duplicate ITR records with the same enrollment number get patched too
+            const result = await User.updateMany({ enrollmentNumber: enroll }, { email: email });
+            patched25 += result.modifiedCount;
+          }
+        }
+      }
+      console.log(`✓ Patched ${patched25} emails for AY 2025-26\n`);
     }
 
     // ── Summary ──

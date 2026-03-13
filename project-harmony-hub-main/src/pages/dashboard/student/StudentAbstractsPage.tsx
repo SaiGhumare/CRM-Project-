@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Upload, Download, Eye, CheckCircle, XCircle, AlertCircle, Save, Loader2, Plus } from 'lucide-react';
+import { FileText, Upload, Download, Eye, CheckCircle, XCircle, AlertCircle, Save, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiGet, apiPost, apiUpload } from '@/lib/api';
+import { apiGet, apiPost, apiUpload, apiDelete } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface AbstractRecord {
@@ -119,6 +119,18 @@ export default function StudentAbstractsPage() {
       toast({ title: 'Error', description: error.message || 'Failed to submit abstract.', variant: 'destructive' });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (abstractId: string) => {
+    if (!window.confirm("Are you sure you want to delete this abstract?")) return;
+    try {
+      await apiDelete(`/abstracts/${abstractId}`);
+      toast({ title: 'Abstract Deleted', description: 'Your abstract has been successfully deleted.' });
+      fetchAbstracts();
+    } catch (error: any) {
+      console.error('Failed to delete abstract:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to delete abstract.', variant: 'destructive' });
     }
   };
 
@@ -297,6 +309,18 @@ export default function StudentAbstractsPage() {
                       </Button>
                     </div>
                   )}
+
+                  <div className="flex justify-end pt-2 border-t border-border/50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(abstract._id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Abstract
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

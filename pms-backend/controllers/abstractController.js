@@ -125,9 +125,33 @@ const reviewAbstract = async (req, res) => {
   }
 };
 
+// @desc    Delete an abstract
+// @route   DELETE /api/abstracts/:id
+// @access  Private (admin, student who uploaded)
+const deleteAbstract = async (req, res) => {
+  try {
+    const abstract = await Abstract.findById(req.params.id);
+    if (!abstract) {
+      return res.status(404).json({ message: 'Abstract not found' });
+    }
+
+    // Only admin or the uploader can delete
+    if (req.user.role !== 'admin' && abstract.submittedBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to delete this abstract' });
+    }
+
+    await abstract.deleteOne();
+    res.json({ success: true, message: 'Abstract deleted' });
+  } catch (error) {
+    console.error('deleteAbstract error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   submitAbstract,
   getAllAbstracts,
   getAbstractsByGroup,
   reviewAbstract,
+  deleteAbstract,
 };
