@@ -36,6 +36,9 @@ const getAllITR = async (req, res) => {
     const query = {};
     if (status) query.status = status;
 
+    // ITR coordinators can see all ITR records (no strict coordinatorId filter
+    // needed since there is only one coordinator managing all students)
+
     // Filter by academic year and/or department through student
     if (academicYear || department) {
       const studentQuery = { role: 'student' };
@@ -185,6 +188,51 @@ const getITRStudents = async (req, res) => {
   }
 };
 
+// @desc    Upload an ITR Document (Offer Letter, Report, Certificate)
+// @route   POST /api/itr/:id/document
+// @access  Private (student, itr_coordinator)
+const uploadITRDocument = async (req, res) => {
+  try {
+    const { documentType } = req.body; // 'offerLetter', 'projectReport', or 'certificate'
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload a file' });
+    }
+
+    const validDocumentTypes = ['offerLetter', 'projectReport', 'certificate'];
+    if (!validDocumentTypes.includes(documentType)) {
+      return res.status(400).json({ message: 'Invalid document type. Must be offerLetter, projectReport, or certificate.' });
+    }
+
+    const itr = await ITR.findById(req.params.id);
+    if (!itr) {
+      return res.status(404).json({ message: 'ITR record not found' });
+    }
+
+    // Auth check: student or coordinator
+    if (req.user.role === 'student' && itr.studentId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized for this ITR record' });
+    }
+
+    itr[documentType] = {
+      url: `/uploads/${req.file.filename}`,
+      fileName: req.file.originalname,
+      status: 'pending' // Reset status on re-upload
+    };
+
+    await itr.save();
+
+    const updatedITR = await ITR.findById(itr._id)
+      .populate('studentId', '-password')
+      .populate('coordinatorId', '-password');
+
+    res.status(200).json({ success: true, data: updatedITR });
+  } catch (error) {
+    console.error('uploadITRDocument error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   createITR,
   getAllITR,
@@ -192,4 +240,5 @@ module.exports = {
   updateITR,
   addDailyDetail,
   getITRStudents,
+  uploadITRDocument,
 };

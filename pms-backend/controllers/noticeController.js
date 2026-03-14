@@ -103,12 +103,17 @@ const sendNotice = async (req, res) => {
 
 // @desc    Delete a notice
 // @route   DELETE /api/notices/:id
-// @access  Private (admin)
+// @access  Private (admin, itr_coordinator)
 const deleteNotice = async (req, res) => {
   try {
     const notice = await Notice.findById(req.params.id);
     if (!notice) {
       return res.status(404).json({ message: 'Notice not found' });
+    }
+
+    // Auth check: Admins can delete anything, but ITR coordinators can only delete their own
+    if (req.user.role !== 'admin' && notice.createdBy.toString() !== req.user.id) {
+       return res.status(403).json({ message: 'Not authorized to delete this notice' });
     }
 
     await notice.deleteOne();
