@@ -147,43 +147,72 @@ const addDailyDetail = async (req, res) => {
 const getITRStudents = async (req, res) => {
   try {
     const { academicYear, department } = req.query;
-    const itrQuery = {};
 
-    // Filter by academic year and/or department through student
-    if (academicYear || department) {
-      const studentQuery = { role: 'student' };
-      if (academicYear) studentQuery.academicYear = academicYear;
-      if (department) studentQuery.department = department;
-      const students = await User.find(studentQuery).select('_id');
-      itrQuery.studentId = { $in: students.map(s => s._id) };
-    }
-
-    // Get all ITR records and group by student
-    const records = await ITR.find(itrQuery)
-      .populate('studentId', '-password')
-      .populate('coordinatorId', '-password')
-      .sort({ createdAt: -1 });
-
-    // Get unique students from ITR records
-    console.log("ITR query:", itrQuery); console.log("Found records:", records.length); const studentMap = {};
-    records.forEach(record => {
-      if (record.studentId) {
-        const sid = record.studentId._id.toString();
-        if (!studentMap[sid]) {
-          studentMap[sid] = {
-            student: record.studentId,
-            itrRecords: [],
-          };
+    const pipeline = [
+      // 1. Join with Users collection (student)
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'student'
         }
-        studentMap[sid].itrRecords.push(record);
-      }
-    });
+      },
+      // 2. Unwind the joined array to make elements flat (keep only valid student joins)
+      { $unwind: '$student' },
+      
+      // 3. Filter using the joined student fields
+      {
+        $match: {
+          'student.role': 'student',
+          ...(academicYear ? { 'student.academicYear': academicYear } : {}),
+          ...(department ? { 'student.department': department } : {})
+        }
+      },
+      
+      // 4. Optionally join coordinator details
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'coordinatorId',
+          foreignField: '_id',
+          as: 'coordinatorId'
+        }
+      },
+      {
+        $unwind: { path: '$coordinatorId', preserveNullAndEmptyArrays: true }
+      },
 
-    const students = Object.values(studentMap);
+      // 5. Group by student to structure the response format: { student, itrRecords: [...] }
+      {
+        $group: {
+          _id: '$student._id',
+          student: { $first: '$student' },
+          itrRecords: { $push: '$$ROOT' }
+        }
+      },
+
+      // 6. Cleanup sensitive fields like passwords and avoid circular nesting
+      {
+        $project: {
+          '_id': 0,
+          'student.password': 0,
+          'itrRecords.student': 0, // removed duplicate student object
+          'itrRecords.coordinatorId.password': 0
+        }
+      },
+      
+      // 7. Sort by student name
+      {
+        $sort: { 'student.name': 1 }
+      }
+    ];
+
+    const students = await ITR.aggregate(pipeline);
 
     res.json({ success: true, count: students.length, data: students });
   } catch (error) {
-    console.error('getITRStudents error:', error);
+    console.error('getITRStudents aggregation error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
