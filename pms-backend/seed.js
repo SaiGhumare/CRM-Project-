@@ -713,6 +713,85 @@ const seedDB = async () => {
       console.log('⚠ ITR 2025-26 CSV file not found at path: ' + itr2025CsvPath + '\n');
     }
 
+    // ── 13.5. Create AY 2024-25 ITR Students (from 2024-25-ITR-student-list - SYCO_Roll_NO.csv) ──
+    console.log('─── AY 2024-25 ITR List ───');
+    const itr2024CsvPath = path.join(__dirname, '../imp files/2024-25-ITR-student-list - SYCO_Roll_NO.csv');
+    let itr2024Created = 0;
+
+    if (fs.existsSync(itr2024CsvPath)) {
+      const itrCsvData = fs.readFileSync(itr2024CsvPath, 'utf-8');
+      const itrLines = itrCsvData.split('\n').map(l => l.trim()).filter(l => l);
+
+      // Data format: Sr No.,Enrollment No,Name of Student,Address,Area,Company,Mobile No
+      for (let i = 0; i < itrLines.length; i++) {
+        const line = itrLines[i];
+        if (i < 7 || line.startsWith('Sr No')) continue; // Skip headers/empty metadata
+
+        // CSV parsing logic considering quotes
+        let parts = [];
+        let inQuotes = false;
+        let currentPart = '';
+        
+        for(let char of line) {
+          if(char === '"') {
+            inQuotes = !inQuotes;
+          } else if(char === ',' && !inQuotes) {
+            parts.push(currentPart.trim());
+            currentPart = '';
+          } else {
+            currentPart += char;
+          }
+        }
+        parts.push(currentPart.trim());
+
+        if (parts.length < 6) continue;
+
+        const enroll = parts[1].replace(/"/g, '').trim();
+        const name = parts[2].replace(/"/g, '').trim();
+        const company = parts[5].replace(/"/g, '').trim();
+
+        if (!name || !company || !enroll) continue;
+
+        // Check if student already exists (they likely do from previous sections)
+        let student = await User.findOne({ enrollmentNumber: enroll });
+
+        if (!student) {
+          // Generate an email fallback
+          const firstName = name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '');
+          const email = `${firstName}${Math.floor(Math.random() * 1000)}.2024@sandip.edu`;
+
+          // Create student
+          student = await User.create({
+            name: name,
+            email: email,
+            password: 'student123',
+            role: 'student',
+            enrollmentNumber: enroll,
+            department: 'CO',
+            className: 'TY Diploma',
+            division: 'A',
+            academicYear: '2024-25',
+          });
+        }
+
+        // Create ITR Record
+        await ITR.create({
+          studentId: student._id,
+          companyName: company,
+          startDate: new Date('2025-05-15'), // Estimated past date
+          endDate: new Date('2025-06-30'), // Estimated past date
+          status: 'completed',
+          coordinatorId: itrCoord._id,
+          dailyDetails: [],
+        });
+        itr2024Created++;
+      }
+      console.log(`✓ ${itr2024Created} students & ITR records (AY 2024-25) created\n`);
+      itrCreated += itr2024Created;
+    } else {
+      console.log('⚠ ITR 2024-25 CSV file not found at path: ' + itr2024CsvPath + '\n');
+    }
+
     // ── 14. Patch Actual Emails from CSVs ──
     console.log('─── Patching Actual Emails ───');
 
