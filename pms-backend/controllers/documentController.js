@@ -19,7 +19,7 @@ const uploadDocument = async (req, res) => {
       fileUrl: `/uploads/${req.file.filename}`,
       uploadedBy: req.user.id,
       groupId,
-      stage: stage || 1,
+      stage: stage ? parseInt(stage) : 1,
     });
 
     const populated = await Document.findById(doc._id)
@@ -29,6 +29,37 @@ const uploadDocument = async (req, res) => {
     res.status(201).json({ success: true, data: populated });
   } catch (error) {
     console.error('uploadDocument error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Upload a link (e.g., GitHub Link for Stage 3)
+// @route   POST /api/documents/link
+// @access  Private (student)
+const uploadLink = async (req, res) => {
+  try {
+    const { type, groupId, stage, link } = req.body;
+
+    if (!link) {
+      return res.status(400).json({ message: 'Please provide a valid link' });
+    }
+
+    const doc = await Document.create({
+      type,
+      fileName: link, // Reusing fileName to store the display text or url
+      fileUrl: link,  // Storing the actual URL here
+      uploadedBy: req.user.id,
+      groupId,
+      stage: stage ? parseInt(stage) : 3,
+    });
+
+    const populated = await Document.findById(doc._id)
+      .populate('uploadedBy', '-password')
+      .populate('groupId');
+
+    res.status(201).json({ success: true, data: populated });
+  } catch (error) {
+    console.error('uploadLink error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -86,12 +117,82 @@ const getDocumentsByGroup = async (req, res) => {
     const docs = await Document.find({ groupId: req.params.groupId })
       .populate('uploadedBy', '-password')
       .populate('reviewedBy', '-password')
-      .sort({ createdAt: -1 });
+      .sort({ stage: 1, createdAt: -1 });
 
     res.json({ success: true, count: docs.length, data: docs });
   } catch (error) {
     console.error('getDocumentsByGroup error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Get single document
+// @route   GET /api/documents/:id
+// @access  Private
+const getSingleDocument = async (req, res) => {
+  try {
+    const doc = await Document.findById(req.params.id)
+      .populate('uploadedBy', '-password')
+      .populate('reviewedBy', '-password');
+    if (!doc) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+    res.json({ success: true, data: doc });
+  } catch (error) {
+    console.error('getSingleDocument error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Document types per stage — used for progress calculation
+const STAGE_1_TYPES = new Set(['synopsis', 'ppt_stage_one', 'first_project_report', 'weekly_diary']);
+const STAGE_2_TYPES = new Set(['ppt_final', 'final_report', 'black_book', 'sponsorship_letter']);
+const STAGE_3_TYPES = new Set(['github_link']);
+
+// Recalculate and persist group progress after a review action
+const recalculateGroupProgress = async (groupId) => {
+  const docs = await Document.find({ groupId });
+
+  const approvedStage1Types = new Set(
+    docs
+      .filter(d => d.stage === 1 && d.status === 'approved' && STAGE_1_TYPES.has(d.type))
+      .map(d => d.type)
+  );
+
+  const approvedStage2Types = new Set(
+    docs
+      .filter(d => d.stage === 2 && d.status === 'approved' && STAGE_2_TYPES.has(d.type))
+      .map(d => d.type)
+  );
+
+  const approvedStage3Types = new Set(
+    docs
+      .filter(d => d.stage === 3 && d.status === 'approved' && STAGE_3_TYPES.has(d.type))
+      .map(d => d.type)
+  );
+
+  const stage1Complete = approvedStage1Types.size >= STAGE_1_TYPES.size;
+  // For stage 2, weekly_diary is not a required document for completion, it's an ongoing submission.
+  // So, we remove 'weekly_diary' from STAGE_2_TYPES for completion check.
+  const stage2CompletionTypes = new Set([...STAGE_2_TYPES].filter(type => type !== 'weekly_diary'));
+  const stage2Complete = approvedStage2Types.size >= stage2CompletionTypes.size;
+  const stage3Complete = approvedStage3Types.size >= STAGE_3_TYPES.size;
+
+  const group = await StudentGroup.findById(groupId);
+  if (!group) return;
+
+  let newProgress = group.overallProgress;
+  if (stage3Complete) {
+    newProgress = 100; // 100% when Stage 3 (GitHub link) is approved
+  } else if (stage2Complete) {
+    newProgress = Math.max(group.overallProgress, 99); // 99% for stage 2 completion
+  } else if (stage1Complete) {
+    newProgress = Math.max(group.overallProgress, 50); // 50% for stage 1 completion
+  }
+
+  if (newProgress !== group.overallProgress) {
+    group.overallProgress = newProgress;
+    await group.save();
   }
 };
 
@@ -113,10 +214,13 @@ const reviewDocument = async (req, res) => {
     }
 
     doc.status = status;
-    doc.feedback = feedback;
+    doc.feedback = feedback || '';
     doc.reviewedBy = req.user.id;
     doc.reviewedAt = Date.now();
     await doc.save();
+
+    // Recalculate group progress after each review
+    await recalculateGroupProgress(doc.groupId);
 
     const updated = await Document.findById(doc._id)
       .populate('uploadedBy', '-password')
@@ -132,7 +236,7 @@ const reviewDocument = async (req, res) => {
 
 // @desc    Delete document
 // @route   DELETE /api/documents/:id
-// @access  Private (admin, student who uploaded)
+// @access  Private (admin, any group member)
 const deleteDocument = async (req, res) => {
   try {
     const doc = await Document.findById(req.params.id);
@@ -140,23 +244,35 @@ const deleteDocument = async (req, res) => {
       return res.status(404).json({ message: 'Document not found' });
     }
 
-    // Only admin or the uploader can delete
-    if (req.user.role !== 'admin' && doc.uploadedBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to delete this document' });
+    // Admins can always delete
+    if (req.user.role === 'admin') {
+      await doc.deleteOne();
+      return res.json({ success: true, message: 'Document deleted' });
     }
 
-    await doc.deleteOne();
-    res.json({ success: true, message: 'Document deleted' });
+    // For students, allow any member of the same group to delete
+    if (req.user.role === 'student') {
+      const group = await StudentGroup.findById(doc.groupId);
+      if (group && group.members.map(m => m.toString()).includes(req.user.id)) {
+        await doc.deleteOne();
+        return res.json({ success: true, message: 'Document deleted' });
+      }
+    }
+
+    return res.status(403).json({ message: 'Not authorized to delete this document' });
   } catch (error) {
     console.error('deleteDocument error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
+
 module.exports = {
   uploadDocument,
+  uploadLink,
   getAllDocuments,
   getDocumentsByGroup,
+  getSingleDocument,
   reviewDocument,
   deleteDocument,
 };

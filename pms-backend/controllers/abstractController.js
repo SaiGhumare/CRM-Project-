@@ -8,6 +8,24 @@ const submitAbstract = async (req, res) => {
   try {
     const { title, description, groupId } = req.body;
 
+    // Check if group already has 3 abstracts
+    const abstractCount = await Abstract.countDocuments({ groupId });
+    if (abstractCount >= 3) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Maximum limit of 3 abstracts reached for this group.' 
+      });
+    }
+
+    // Check if group already has an approved abstract
+    const approvedExists = await Abstract.findOne({ groupId, status: 'approved' });
+    if (approvedExists) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Your group already has an approved abstract. No more submissions allowed.' 
+      });
+    }
+
     const abstract = await Abstract.create({
       title,
       description,
@@ -107,19 +125,34 @@ const reviewAbstract = async (req, res) => {
     abstract.reviewedAt = Date.now();
     await abstract.save();
 
-    // If approved, bump group progress (only on the first approved abstract for this group)
+    // If approved, handle side effects
     if (status === 'approved') {
-      const alreadyApproved = await Abstract.countDocuments({
+      // 1. Automatically reject all other pending/rejected abstracts for this group
+      await Abstract.updateMany(
+        { 
+          groupId: abstract.groupId, 
+          _id: { $ne: abstract._id } 
+        },
+        { 
+          status: 'rejected', 
+          feedback: 'This group already has an approved abstract.',
+          reviewedBy: req.user.id,
+          reviewedAt: Date.now()
+        }
+      );
+
+      // 2. Set the group's project title to this abstract's title
+      // 3. Increase progress by 10% (only on first approval)
+      const alreadyApprovedCount = await Abstract.countDocuments({
         groupId: abstract.groupId,
         status: 'approved',
         _id: { $ne: abstract._id },
       });
-      if (alreadyApproved === 0) {
-        // First abstract approval — increase progress by 20%
-        await StudentGroup.findByIdAndUpdate(abstract.groupId, {
-          $inc: { overallProgress: 20 },
-        });
-      }
+
+      await StudentGroup.findByIdAndUpdate(abstract.groupId, {
+        $set: { projectTitle: abstract.title },
+        ...(alreadyApprovedCount === 0 ? { $inc: { overallProgress: 10 } } : {})
+      });
     }
 
     const updated = await Abstract.findById(abstract._id)

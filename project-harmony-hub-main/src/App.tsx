@@ -34,6 +34,7 @@ import StudentDocumentsPage from "./pages/dashboard/student/StudentDocumentsPage
 import StudentITRPage from "./pages/dashboard/student/StudentITRPage";
 import StudentCertificatesPage from "./pages/dashboard/student/StudentCertificatesPage";
 import StudentSampleDocumentsPage from "./pages/dashboard/student/StudentSampleDocumentsPage";
+import StudentAssignmentsPage from "./pages/dashboard/student/StudentAssignmentsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -96,10 +97,12 @@ const App = () => (
             {/* Student Routes */}
             <Route path="/dashboard/student" element={<StudentDashboard />} />
             <Route path="/dashboard/student/group" element={<StudentGroupPage />} />
+            <Route path="/dashboard/student/notices" element={<NoticePage role="student" />} />
             <Route path="/dashboard/student/abstracts" element={<StudentAbstractsPage />} />
             <Route path="/dashboard/student/documents" element={<StudentDocumentsPage />} />
             <Route path="/dashboard/student/itr" element={<StudentITRPage />} />
             <Route path="/dashboard/student/certificates" element={<StudentCertificatesPage />} />
+            <Route path="/dashboard/student/assignments" element={<StudentAssignmentsPage />} />
             <Route path="/dashboard/student/sample-documents" element={<StudentSampleDocumentsPage />} />
             
             <Route path="*" element={<NotFound />} />

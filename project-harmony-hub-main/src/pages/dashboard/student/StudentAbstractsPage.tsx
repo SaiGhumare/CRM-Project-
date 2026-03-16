@@ -147,6 +147,8 @@ export default function StudentAbstractsPage() {
 
   const finalizedAbstract = abstracts.find(abs => abs.status === 'approved');
   const hasApproved = !!finalizedAbstract;
+  const abstractLimit = 3;
+  const canSubmit = !hasApproved && abstracts.length < abstractLimit;
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -157,13 +159,20 @@ export default function StudentAbstractsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Abstract Submission</h1>
-            <p className="text-muted-foreground">Submit abstract proposals for your project</p>
+            <p className="text-muted-foreground text-sm">Submit up to {abstractLimit} abstract proposals for your project</p>
           </div>
-          {!hasApproved && !showForm && groupId && (
-            <Button className="btn-success" onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Abstract
-            </Button>
+          {groupId && (
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                Submitted: {abstracts.length} / {abstractLimit}
+              </div>
+              {!showForm && canSubmit && (
+                <Button className="btn-success" onClick={() => setShowForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Abstract
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
@@ -349,11 +358,17 @@ export default function StudentAbstractsPage() {
           </CardHeader>
           <CardContent>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Submit your abstract proposal with a clear title and detailed description</li>
-              <li>You can optionally attach a PDF/DOC file with your abstract document</li>
-              <li>Your mentor/HOD will review and provide feedback</li>
-              <li>If your abstract is rejected, you can submit a new one with corrections</li>
-              <li>Once approved, you can proceed with document submissions</li>
+              <li>You can submit up to <strong>{abstractLimit}</strong> abstract proposals for your project.</li>
+              <li>Any group member can submit an abstract, but the limit applies to the whole group.</li>
+              <li>Your assigned mentor will review and provide feedback.</li>
+              <li>Once <strong>any one</strong> abstract is approved:
+                <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
+                  <li>It becomes your final project title.</li>
+                  <li>All other submitted abstracts for your group will be automatically rejected.</li>
+                  <li>Your project progress will increase by 10%.</li>
+                </ul>
+              </li>
+              <li>If all abstracts are rejected and you have remaining attempts, you can submit new ones.</li>
             </ul>
           </CardContent>
         </Card>

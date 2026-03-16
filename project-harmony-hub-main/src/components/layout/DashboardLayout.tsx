@@ -93,9 +93,6 @@ const getNavEntries = (role: UserRole): NavEntry[] => {
           { title: 'Groups', href: '/dashboard/mentor/groups', icon: <ClipboardList className="h-5 w-5" /> },
           { title: 'Abstracts', href: '/dashboard/mentor/abstracts', icon: <FileText className="h-5 w-5" />, badge: 3 },
           { title: 'Sample Documents', href: '/dashboard/mentor/sample-documents', icon: <FileDown className="h-5 w-5" /> },
-          { title: 'Documents', href: '/dashboard/mentor/documents', icon: <FolderOpen className="h-5 w-5" />, badge: 5 },
-          { title: 'Certificates', href: '/dashboard/mentor/certificates', icon: <Award className="h-5 w-5" /> },
-          { title: 'Overall Documents', href: '/dashboard/mentor/overall-documents', icon: <FileStack className="h-5 w-5" /> },
         ],
       },
       {
@@ -105,11 +102,11 @@ const getNavEntries = (role: UserRole): NavEntry[] => {
           { title: 'ITR Student List', href: '/dashboard/mentor/itr-students', icon: <Users className="h-5 w-5" /> },
           { title: 'ITR Documents', href: '/dashboard/mentor/itr-documents', icon: <FolderOpen className="h-5 w-5" /> },
           { title: 'ITR Daily Details', href: '/dashboard/mentor/itr-daily', icon: <CalendarCheck className="h-5 w-5" /> },
-          { title: 'ITR Certificates', href: '/dashboard/mentor/itr-certificates', icon: <Award className="h-5 w-5" /> },
         ],
       },
     ];
   }
+
 
   if (role === 'itr_coordinator') {
     return [
@@ -134,10 +131,12 @@ const getNavEntries = (role: UserRole): NavEntry[] => {
   return [
     { title: 'Dashboard', href: '/dashboard/student', icon: <LayoutDashboard className="h-5 w-5" /> },
     { title: 'My Group', href: '/dashboard/student/group', icon: <Users className="h-5 w-5" /> },
+    { title: 'Notices', href: '/dashboard/student/notices', icon: <Megaphone className="h-5 w-5" /> },
     { title: 'Abstracts', href: '/dashboard/student/abstracts', icon: <FileText className="h-5 w-5" /> },
     { title: 'Documents', href: '/dashboard/student/documents', icon: <Upload className="h-5 w-5" /> },
     { title: 'Sample Documents', href: '/dashboard/student/sample-documents', icon: <FileDown className="h-5 w-5" /> },
     { title: 'ITR Section', href: '/dashboard/student/itr', icon: <Briefcase className="h-5 w-5" /> },
+    { title: 'Assignments', href: '/dashboard/student/assignments', icon: <ClipboardList className="h-5 w-5" /> },
     { title: 'Certificates', href: '/dashboard/student/certificates', icon: <Award className="h-5 w-5" /> },
   ];
 };

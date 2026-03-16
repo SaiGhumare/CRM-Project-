@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const certificateSchema = new mongoose.Schema({
+  category: {
+    type: String,
+    enum: ['project', 'itr'],
+    default: 'project',
+  },
   type: {
     type: String,
     enum: ['itr_certificate', 'published_paper', 'project_competition', 'udemy_course'],
@@ -20,9 +25,13 @@ const certificateSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  verified: {
-    type: Boolean,
-    default: false,
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'needs_correction'],
+    default: 'pending',
+  },
+  feedback: {
+    type: String,
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,

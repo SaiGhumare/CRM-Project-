@@ -47,6 +47,7 @@ app.use('/api/groups', require('./routes/groups'));
 app.use('/api/abstracts', require('./routes/abstracts'));
 app.use('/api/documents', require('./routes/documents'));
 app.use('/api/certificates', require('./routes/certificates'));
+app.use('/api/assignments', require('./routes/assignments'));
 app.use('/api/notices', require('./routes/notices'));
 app.use('/api/itr', require('./routes/itr'));
 app.use('/api/mentors', require('./routes/mentors'));

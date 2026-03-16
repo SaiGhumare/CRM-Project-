@@ -1,11 +1,29 @@
 const Notice = require('../models/Notice');
+const StudentGroup = require('../models/StudentGroup');
+const User = require('../models/User');
+
+// @desc    Get groups + mentors for notice targeting
+// @route   GET /api/notices/targeting-data
+// @access  Private (admin, itr_coordinator)
+const getTargetingData = async (req, res) => {
+  try {
+    const [groups, mentors] = await Promise.all([
+      StudentGroup.find({}, '_id name academicYear department').sort({ name: 1 }),
+      User.find({ role: 'mentor' }, '_id name email').sort({ name: 1 }),
+    ]);
+    res.json({ success: true, data: { groups, mentors } });
+  } catch (error) {
+    console.error('getTargetingData error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 // @desc    Create a notice (manual entry)
 // @route   POST /api/notices
-// @access  Private (admin)
+// @access  Private (admin, itr_coordinator)
 const createNotice = async (req, res) => {
   try {
-    const { title, purpose, startDate, dueDate, sentToStudents, sentToGuides } = req.body;
+    const { title, purpose, startDate, dueDate, sentToStudents, sentToGuides, targetGroups, targetGuides } = req.body;
 
     const notice = await Notice.create({
       title,
@@ -15,6 +33,8 @@ const createNotice = async (req, res) => {
       type: 'manual',
       sentToStudents: !!sentToStudents,
       sentToGuides: !!sentToGuides,
+      targetGroups: targetGroups || [],
+      targetGuides: targetGuides || [],
       createdBy: req.user.id,
     });
 
@@ -30,7 +50,7 @@ const createNotice = async (req, res) => {
 // @access  Private (admin)
 const uploadNotice = async (req, res) => {
   try {
-    const { title, purpose, startDate, dueDate } = req.body;
+    const { title, purpose, startDate, dueDate, sentToStudents, sentToGuides, targetGroups, targetGuides } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a file' });
@@ -44,6 +64,10 @@ const uploadNotice = async (req, res) => {
       type: 'file',
       fileName: req.file.originalname,
       fileUrl: `/uploads/${req.file.filename}`,
+      sentToStudents: !!sentToStudents,
+      sentToGuides: !!sentToGuides,
+      targetGroups: targetGroups ? JSON.parse(targetGroups) : [],
+      targetGuides: targetGuides ? JSON.parse(targetGuides) : [],
       createdBy: req.user.id,
     });
 
@@ -125,6 +149,7 @@ const deleteNotice = async (req, res) => {
 };
 
 module.exports = {
+  getTargetingData,
   createNotice,
   uploadNotice,
   getAllNotices,

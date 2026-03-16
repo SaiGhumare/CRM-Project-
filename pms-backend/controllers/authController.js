@@ -171,6 +171,7 @@ const login = async (req, res) => {
         rollNumber: user.rollNumber,
         division: user.division,
         avatarUrl: user.avatarUrl,
+        groupId: user.groupId,
       },
     });
   } catch (error) {

@@ -310,7 +310,9 @@ export default function AbstractsPage({ role }: AbstractsPageProps) {
               </DialogTitle>
               <DialogDescription>
                 {actionType === 'approve' 
-                  ? 'This will approve the abstract and notify the students.'
+                  ? (abstracts.some(a => a.groupId?._id === selectedAbstract?.groupId?._id && a.status === 'approved' && a._id !== selectedAbstract?._id)
+                    ? 'WARNING: This group already has an approved abstract. Approving this will replace the current selection.'
+                    : 'This will approve the abstract and automatically reject all other pending submissions for this group.')
                   : 'Please provide feedback explaining why the abstract is being rejected.'}
               </DialogDescription>
             </DialogHeader>

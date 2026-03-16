@@ -16,6 +16,7 @@ const documentSchema = new mongoose.Schema({
       'first_project_report',
       'itr_report',
       'offer_letter',
+      'github_link',
     ],
     required: [true, 'Please specify document type'],
   },
@@ -40,7 +41,7 @@ const documentSchema = new mongoose.Schema({
   },
   stage: {
     type: Number,
-    enum: [1, 2],
+    enum: [1, 2, 3],
     default: 1,
   },
   status: {

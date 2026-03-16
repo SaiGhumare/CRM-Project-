@@ -6,18 +6,32 @@ const User = require('../models/User');
 // @access  Private (student)
 const uploadCertificate = async (req, res) => {
   try {
-    const { type } = req.body;
+    const { type, category } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a file' });
     }
 
-    const cert = await Certificate.create({
+    // Check limit
+    const existingCount = await Certificate.countDocuments({ uploadedBy: req.user.id });
+    if (existingCount >= 10) {
+      return res.status(400).json({ message: 'You have reached the maximum limit of 10 certificates.' });
+    }
+
+    const certData = {
       type,
+      category: category || 'project',
       fileName: req.file.originalname,
       fileUrl: `/uploads/${req.file.filename}`,
       uploadedBy: req.user.id,
-    });
+    };
+
+    // Auto-approve ITR certificates
+    if (certData.category === 'itr') {
+      certData.status = 'approved';
+    }
+
+    const cert = await Certificate.create(certData);
 
     const populated = await Certificate.findById(cert._id)
       .populate('uploadedBy', '-password');
@@ -31,14 +45,15 @@ const uploadCertificate = async (req, res) => {
 
 // @desc    Get all certificates
 // @route   GET /api/certificates
-// @access  Private (admin, mentor)
+// @access  Private (admin, mentor, itr_coordinator)
 const getAllCertificates = async (req, res) => {
   try {
-    const { type, verified, academicYear, department } = req.query;
+    const { type, status, academicYear, department, category } = req.query;
     const query = {};
 
     if (type) query.type = type;
-    if (verified !== undefined) query.verified = verified === 'true';
+    if (status) query.status = status;
+    if (category) query.category = category;
 
     // Filter by academic year, department, and/or mentor through student
     const studentQuery = { role: 'student' };
@@ -77,7 +92,14 @@ const getAllCertificates = async (req, res) => {
 // @access  Private (student)
 const getMyCertificates = async (req, res) => {
   try {
-    const certs = await Certificate.find({ uploadedBy: req.user.id })
+    const { category } = req.query;
+    const query = { uploadedBy: req.user.id };
+    
+    if (category) {
+      query.category = category;
+    }
+
+    const certs = await Certificate.find(query)
       .populate('verifiedBy', '-password')
       .sort({ createdAt: -1 });
 
@@ -88,17 +110,24 @@ const getMyCertificates = async (req, res) => {
   }
 };
 
-// @desc    Verify a certificate
-// @route   PUT /api/certificates/:id/verify
+// @desc    Review a certificate (Approve / Needs Correction)
+// @route   PUT /api/certificates/:id/review
 // @access  Private (admin, mentor)
-const verifyCertificate = async (req, res) => {
+const reviewCertificate = async (req, res) => {
   try {
+    const { status, feedback } = req.body;
+    
+    if (!['approved', 'needs_correction'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
     const cert = await Certificate.findById(req.params.id);
     if (!cert) {
       return res.status(404).json({ message: 'Certificate not found' });
     }
 
-    cert.verified = true;
+    cert.status = status;
+    cert.feedback = feedback;
     cert.verifiedBy = req.user.id;
     await cert.save();
 
@@ -108,7 +137,7 @@ const verifyCertificate = async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('verifyCertificate error:', error);
+    console.error('reviewCertificate error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -139,6 +168,6 @@ module.exports = {
   uploadCertificate,
   getAllCertificates,
   getMyCertificates,
-  verifyCertificate,
+  reviewCertificate,
   deleteCertificate,
 };

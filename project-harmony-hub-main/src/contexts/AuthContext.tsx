@@ -140,7 +140,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.success && data.token) {
         setToken(data.token);
-        setUser(mapUser(data.user));
+
+        // Immediately fetch the full user profile (includes populated groupId)
+        try {
+          const meData = await apiGet<MeResponse>('/auth/me');
+          if (meData.success && meData.user) {
+            setUser({
+              id: meData.user._id,
+              name: meData.user.name,
+              email: meData.user.email,
+              role: meData.user.role,
+              department: meData.user.department as User['department'],
+              enrollmentNumber: meData.user.enrollmentNumber,
+              rollNumber: meData.user.rollNumber,
+              avatarUrl: meData.user.avatarUrl,
+              groupId: meData.user.groupId,
+            });
+          } else {
+            setUser(mapUser(data.user));
+          }
+        } catch {
+          // Fallback to login response if /me fails
+          setUser(mapUser(data.user));
+        }
+
         return true;
       }
       return false;
