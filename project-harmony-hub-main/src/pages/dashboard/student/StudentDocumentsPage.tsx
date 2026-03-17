@@ -222,6 +222,12 @@ export default function StudentDocumentsPage() {
       window.open(doc.fileUrl, '_blank');
       return;
     }
+    // General check for external links
+    if (doc.fileUrl?.startsWith('http')) {
+      window.open(doc.fileUrl, '_blank');
+      return;
+    }
+
     try {
       const res = await apiGet<{ data: { fileUrl: string } }>(`/documents/${doc.id}`);
       if (res.data?.fileUrl) window.open(`http://localhost:5001${res.data.fileUrl}`, '_blank');
@@ -505,9 +511,9 @@ export default function StudentDocumentsPage() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground font-mono">
-                                  {isReal ? (
-                                    <a href={doc.fileName} target="_blank" rel="noopener noreferrer" className="text-info hover:underline">
-                                      {doc.fileName.length > 30 ? doc.fileName.substring(0, 30) + '...' : doc.fileName}
+                                  {isReal && doc.fileUrl ? (
+                                    <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-info hover:underline">
+                                      {doc.fileUrl.length > 30 ? doc.fileUrl.substring(0, 30) + '...' : doc.fileUrl}
                                     </a>
                                   ) : <span className="italic">—</span>}
                                 </TableCell>

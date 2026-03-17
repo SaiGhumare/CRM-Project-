@@ -325,7 +325,13 @@ export default function GroupsPage({ role }: GroupsPageProps) {
                         {doc.fileUrl && (
                           <Button
                             variant="ghost" size="sm" className="text-info h-8 px-2"
-                            onClick={() => window.open(`http://localhost:5001${doc.fileUrl}`, '_blank')}
+                            onClick={() => {
+                              if (doc.fileUrl.startsWith('http')) {
+                                window.open(doc.fileUrl, '_blank');
+                              } else {
+                                window.open(`http://localhost:5001${doc.fileUrl}`, '_blank');
+                              }
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

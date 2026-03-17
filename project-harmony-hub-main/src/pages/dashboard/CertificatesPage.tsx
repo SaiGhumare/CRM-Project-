@@ -69,6 +69,15 @@ export default function CertificatesPage({ role }: CertificatesPageProps) {
     }
   };
 
+  const handleView = (cert: CertificateRecord) => {
+    if (!cert.fileUrl) return;
+    if (cert.fileUrl.startsWith('http')) {
+      window.open(cert.fileUrl, '_blank');
+    } else {
+      window.open(`http://localhost:5001${cert.fileUrl}`, '_blank');
+    }
+  };
+
   useEffect(() => {
     // fetch triggered directly by handleView
   }, []);
@@ -184,7 +193,14 @@ export default function CertificatesPage({ role }: CertificatesPageProps) {
                               <TableCell>{cert.verifiedBy?.name || '-'}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
-                                  <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="text-info"
+                                    onClick={() => handleView(cert)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
                                   <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
                                 </div>
                               </TableCell>

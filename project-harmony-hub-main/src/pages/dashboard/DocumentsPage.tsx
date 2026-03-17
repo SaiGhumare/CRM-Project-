@@ -74,6 +74,15 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
     }
   };
 
+  const handleView = (doc: DocumentRecord) => {
+    if (!doc.fileUrl) return;
+    if (doc.fileUrl.startsWith('http')) {
+      window.open(doc.fileUrl, '_blank');
+    } else {
+      window.open(`http://localhost:5001${doc.fileUrl}`, '_blank');
+    }
+  };
+
   useEffect(() => {
     // fetch triggered directly by handleView
   }, []);
@@ -185,7 +194,14 @@ export default function DocumentsPage({ role }: DocumentsPageProps) {
                                 <TableCell>{getStatusBadge(doc.status)}</TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex justify-end gap-1">
-                                    <Button variant="ghost" size="sm" className="text-info"><Eye className="h-4 w-4" /></Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-info"
+                                      onClick={() => handleView(doc)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
                                     <Button variant="ghost" size="sm"><Download className="h-4 w-4" /></Button>
                                     {doc.status === 'pending' && (
                                       <>
