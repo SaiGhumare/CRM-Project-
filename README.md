@@ -1,4 +1,4 @@
-# 🎓 Project Management System (PMS) — Sandip Foundation
+# 🎓 Project Management System (PMS) 
 
 A comprehensive **Project Management System** built for Sandip Foundation to streamline the management of student projects, documents, abstracts, certificates, and ITR (In-Training Report) activities across departments.
 
