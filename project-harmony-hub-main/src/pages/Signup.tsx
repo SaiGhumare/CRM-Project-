@@ -174,7 +174,7 @@ export default function CreateUserPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="user@sandip.edu"
+                placeholder="user@kbtcoe.org"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 required

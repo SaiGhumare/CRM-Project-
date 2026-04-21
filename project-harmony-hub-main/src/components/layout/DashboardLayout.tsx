@@ -21,8 +21,7 @@ import {
   ClipboardCheck, CalendarCheck, IndianRupee, UserPlus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import sandipFoundationLogo from '@/assets/sandip-foundation-logo.jpeg';
-import sandipPolytechnicLogo from '@/assets/sandip-polytechnic-logo.png';
+import kbtcoeLogo from '@/assets/kbtcoe-logo.png';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -214,7 +213,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-sidebar-foreground truncate">PMS</h2>
-                <p className="text-xs text-sidebar-foreground/70">Sandip Polytechnic</p>
+                <p className="text-xs text-sidebar-foreground/70">KBTCOE</p>
               </div>
             </div>
           </SidebarHeader>
@@ -271,8 +270,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                 <span className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full text-[10px] text-destructive-foreground flex items-center justify-center">3</span>
               </Button>
               <div className="hidden md:flex items-center gap-4">
-                <img src={sandipFoundationLogo} alt="Sandip Foundation" className="h-10 w-auto object-contain" />
-                <img src={sandipPolytechnicLogo} alt="Sandip Polytechnic" className="h-10 w-10 object-contain" />
+                <img src={kbtcoeLogo} alt="KBTCOE" className="h-12 md:h-14 w-auto object-contain" />
               </div>
             </div>
           </header>

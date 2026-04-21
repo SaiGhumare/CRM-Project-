@@ -48,10 +48,10 @@ export default function ForgotPassword() {
             <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
               <GraduationCap className="h-7 w-7 text-primary" />
             </div>
-            <span className="font-semibold text-lg text-foreground">Sandip Foundation</span>
+            <span className="font-semibold text-lg text-foreground">KBTCOE</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="font-semibold text-lg text-foreground">Sandip Polytechnic</span>
+            <span className="font-semibold text-lg text-foreground">KBTCOE</span>
             <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
               <Shield className="h-7 w-7 text-primary" />
             </div>
@@ -100,7 +100,7 @@ export default function ForgotPassword() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your.email@sandip.edu"
+                    placeholder="your.email@kbtcoe.org"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -134,7 +134,7 @@ export default function ForgotPassword() {
 
       {/* Footer */}
       <footer className="text-center py-4 text-sm text-muted-foreground">
-        © 2024 Sandip Polytechnic. All rights reserved.
+        © 2024 KBTCOE. All rights reserved.
       </footer>
     </div>
   );

@@ -103,7 +103,7 @@ export default function Login() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your.email@sandip.edu"
+                  placeholder="your.email@kbtcoe.org"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -169,7 +169,7 @@ export default function Login() {
       </main>
 
       <footer className="text-center py-4 text-sm text-muted-foreground">
-        © 2025 Sandip Polytechnic. All rights reserved.
+        © 2025 KBTCOE. All rights reserved.
       </footer>
     </div>
   );

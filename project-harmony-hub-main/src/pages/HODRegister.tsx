@@ -113,7 +113,7 @@ export default function HODRegister() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="hod@sandip.edu"
+                  placeholder="hod@kbtcoe.org"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   required
@@ -196,7 +196,7 @@ export default function HODRegister() {
       </main>
 
       <footer className="text-center py-4 text-sm text-muted-foreground">
-        © 2025 Sandip Polytechnic. All rights reserved.
+        © 2025 KBTCOE. All rights reserved.
       </footer>
     </div>
   );

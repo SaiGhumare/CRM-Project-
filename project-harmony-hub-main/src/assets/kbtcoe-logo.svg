@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" width="300" height="100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="300" height="100" rx="10" ry="10" fill="url(#grad)" />
+  <text x="150" y="58" font-family="'Inter', sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">KBTCOE</text>
+  <text x="150" y="85" font-family="'Inter', sans-serif" font-size="12" font-weight="500" fill="#cbd5e1" text-anchor="middle">Official Portal</text>
+</svg>
